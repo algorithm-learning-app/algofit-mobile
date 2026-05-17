@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
-import 'models/guest_progress.dart';
-import 'screens/home/home_screen.dart';
+import 'router/app_router.dart';
+import 'services/progress_repository.dart';
 import 'theme/app_theme.dart';
 
-/// 홈 UI 시연용 목 데이터 (로컬 저장 연동 전).
-const _demoProgress = GuestProgress(
-  streakCount: 5,
-  xp: 42,
-  dailyProgress: 2,
-);
-
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -22,19 +16,30 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
-  runApp(const AlgofitApp());
+
+  final repo = await ProgressRepository.create();
+  runApp(AlgofitApp(repo: repo));
 }
 
-class AlgofitApp extends StatelessWidget {
-  const AlgofitApp({super.key});
+class AlgofitApp extends StatefulWidget {
+  const AlgofitApp({super.key, required this.repo});
+
+  final ProgressRepository repo;
+
+  @override
+  State<AlgofitApp> createState() => _AlgofitAppState();
+}
+
+class _AlgofitAppState extends State<AlgofitApp> {
+  late final GoRouter _router = createAppRouter(widget.repo);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: '알고핏',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
-      home: const HomeScreen(progress: _demoProgress),
+      routerConfig: _router,
     );
   }
 }

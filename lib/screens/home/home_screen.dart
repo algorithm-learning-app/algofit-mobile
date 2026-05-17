@@ -1,37 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/guest_progress.dart';
+import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, this.progress = const GuestProgress()});
+  const HomeScreen({super.key, required this.repo});
 
-  final GuestProgress progress;
+  final ProgressRepository repo;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-              children: [
-                _HomeHeader(progress: progress),
-                const SizedBox(height: 16),
-                _DailyCard(progress: progress),
-                const SizedBox(height: 16),
-                const _PcBonusCard(),
-                const SizedBox(height: 16),
-                _WorldPreview(nodes: progress.world1Nodes),
-              ],
+    return ListenableBuilder(
+      listenable: repo,
+      builder: (context, _) {
+        final progress = repo.progress;
+        return Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                  children: [
+                    _HomeHeader(progress: progress),
+                    const SizedBox(height: 16),
+                    _DailyCard(repo: repo, progress: progress),
+                    const SizedBox(height: 16),
+                    const _PcBonusCard(),
+                    const SizedBox(height: 16),
+                    _WorldPreview(nodes: progress.world1Nodes),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-      bottomNavigationBar: const AlgofitBottomNavBar(),
+          bottomNavigationBar: const AlgofitBottomNavBar(),
+        );
+      },
     );
   }
 }
@@ -99,15 +107,13 @@ class _HomeHeader extends StatelessWidget {
               const SizedBox(height: 6),
               Semantics(
                 label: '경험치',
-                value:
-                    '${progress.xp} / ${progress.xpToNextLevel}',
+                value: '${progress.xp} / ${progress.xpToNextLevel}',
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
                     value: progress.xpPercent,
                     minHeight: 8,
-                    backgroundColor:
-                        AppColors.muted.withValues(alpha: 0.25),
+                    backgroundColor: AppColors.muted.withValues(alpha: 0.25),
                     color: AppColors.xp,
                   ),
                 ),
@@ -121,12 +127,27 @@ class _HomeHeader extends StatelessWidget {
 }
 
 class _DailyCard extends StatelessWidget {
-  const _DailyCard({required this.progress});
+  const _DailyCard({required this.repo, required this.progress});
 
+  final ProgressRepository repo;
   final GuestProgress progress;
+
+  void _onDailyTap(BuildContext context) {
+    if (progress.todayDailyCompleted) {
+      context.push('/daily/complete');
+      return;
+    }
+    if (repo.dailySession == null && progress.dailyProgress == 0) {
+      repo.startDailySession();
+    }
+    final step = repo.dailyResumeStep();
+    context.push('/daily/$step');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final completedToday = progress.todayDailyCompleted;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -211,9 +232,16 @@ class _DailyCard extends StatelessWidget {
               '5문제 전부 정답 시 스트릭',
               style: TextStyle(fontSize: 13, color: AppColors.streak),
             ),
+            if (completedToday) ...[
+              const SizedBox(height: 8),
+              const Text(
+                '오늘 챌린지를 완료했어요. 내일 다시 도전해 보세요!',
+                style: TextStyle(fontSize: 13, color: AppColors.muted),
+              ),
+            ],
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: () {},
+              onPressed: () => _onDailyTap(context),
               child: Text(progress.dailyCtaLabel),
             ),
           ],
