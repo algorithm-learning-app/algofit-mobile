@@ -323,22 +323,25 @@ class _WorldPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'World 1',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
+      child: InkWell(
+        onTap: () => context.push('/world/1'),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'World 1',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.push('/world/1'),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     padding: EdgeInsets.zero,
@@ -346,7 +349,7 @@ class _WorldPreview extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: const Text(
-                    '맵 보기',
+                    '전체 보기',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -376,7 +379,8 @@ class _WorldPreview extends StatelessWidget {
                 ),
               ],
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
