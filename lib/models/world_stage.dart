@@ -24,3 +24,25 @@ WorldNodeState worldStageNodeState({
   }
   return WorldNodeState.locked;
 }
+
+/// 스테이지 클리어 후 맵 노드 갱신 (order는 1-based)
+List<WorldNodeState> advanceWorld1NodesAfterClear({
+  required List<WorldNodeState> nodes,
+  required int clearedStageOrder,
+  required int mapStageCount,
+}) {
+  final result = List<WorldNodeState>.from(nodes);
+  while (result.length < mapStageCount) {
+    result.add(WorldNodeState.locked);
+  }
+
+  final idx = clearedStageOrder - 1;
+  if (idx < 0 || idx >= result.length) return result;
+
+  result[idx] = WorldNodeState.cleared;
+  final nextIdx = idx + 1;
+  if (nextIdx < result.length && result[nextIdx] == WorldNodeState.locked) {
+    result[nextIdx] = WorldNodeState.current;
+  }
+  return result;
+}

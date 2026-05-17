@@ -61,6 +61,17 @@ Future<DailyQuestion?> getDailyQuestion(int index) async {
   return pack.questions[index];
 }
 
+Future<DailyQuestion?> getQuestionById(String questionId) async {
+  final pools = await loadQuestionPools();
+  for (final pick in pools.picks) {
+    if (pick.id == questionId) return pick;
+  }
+  for (final blank in pools.blanks) {
+    if (blank.id == questionId) return blank;
+  }
+  return null;
+}
+
 Future<QuestionPools> loadQuestionPools() async {
   if (_cachedPools != null) return _cachedPools!;
   final pickRaw = await rootBundle.loadString('assets/data/pick.json');

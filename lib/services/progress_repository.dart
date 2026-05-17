@@ -4,9 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../data/world1_stages.dart';
 import '../models/daily_session.dart';
 import '../models/guest_progress.dart';
+import '../models/world_stage.dart';
 import 'daily_service.dart';
+import 'stage_service.dart';
 
 const _progressKey = 'algofit:guestProgress';
 const _guestIdKey = 'algofit:guestId';
@@ -203,5 +206,33 @@ class ProgressRepository extends ChangeNotifier {
       return session.questionIndex + 1;
     }
     return (session.questionIndex + 1).clamp(1, dailyTotal);
+  }
+
+  GuestProgress completeWorld1Stage(int stageOrder) {
+    var nodes = List<WorldNodeState>.from(_progress.world1Nodes);
+    while (nodes.length < world1MapStages.length) {
+      nodes.add(WorldNodeState.locked);
+    }
+
+    final idx = stageOrder - 1;
+    final alreadyCleared =
+        idx >= 0 && idx < nodes.length && nodes[idx] == WorldNodeState.cleared;
+
+    final updatedNodes = alreadyCleared
+        ? nodes
+        : advanceWorld1NodesAfterClear(
+            nodes: nodes,
+            clearedStageOrder: stageOrder,
+            mapStageCount: world1MapStages.length,
+          );
+
+    var next = alreadyCleared
+        ? _progress
+        : addXp(_progress, stageXpPerQuestion);
+    next = next.copyWith(world1Nodes: updatedNodes);
+    _progress = next;
+    _saveProgress();
+    notifyListeners();
+    return next;
   }
 }

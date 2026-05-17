@@ -18,7 +18,9 @@ class GuestProgress {
     this.hearts = 5,
     this.world1Nodes = const [
       WorldNodeState.cleared,
+      WorldNodeState.cleared,
       WorldNodeState.current,
+      WorldNodeState.locked,
       WorldNodeState.locked,
       WorldNodeState.locked,
       WorldNodeState.locked,
@@ -127,7 +129,9 @@ class GuestProgress {
     if (raw is! List) {
       return const [
         WorldNodeState.cleared,
+        WorldNodeState.cleared,
         WorldNodeState.current,
+        WorldNodeState.locked,
         WorldNodeState.locked,
         WorldNodeState.locked,
         WorldNodeState.locked,
