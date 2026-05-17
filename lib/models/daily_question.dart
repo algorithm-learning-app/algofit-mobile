@@ -1,3 +1,6 @@
+const defaultFeedbackCorrect = '정답이에요!';
+const defaultFeedbackWrong = '아쉬워요. 다시 한번 생각해보세요.';
+
 class DailyChoice {
   const DailyChoice({required this.id, required this.label});
 
@@ -75,8 +78,9 @@ class PickQuestion extends DailyQuestion {
       id: json['id'] as String,
       stem: json['stem'] as String,
       explanation: json['explanation'] as String,
-      feedbackCorrect: json['feedbackCorrect'] as String,
-      feedbackWrong: json['feedbackWrong'] as String,
+      feedbackCorrect:
+          json['feedbackCorrect'] as String? ?? defaultFeedbackCorrect,
+      feedbackWrong: json['feedbackWrong'] as String? ?? defaultFeedbackWrong,
       choices: (json['choices'] as List<dynamic>)
           .map((e) => DailyChoice.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -104,8 +108,9 @@ class BlankQuestion extends DailyQuestion {
       id: json['id'] as String,
       stem: json['stem'] as String,
       explanation: json['explanation'] as String,
-      feedbackCorrect: json['feedbackCorrect'] as String,
-      feedbackWrong: json['feedbackWrong'] as String,
+      feedbackCorrect:
+          json['feedbackCorrect'] as String? ?? defaultFeedbackCorrect,
+      feedbackWrong: json['feedbackWrong'] as String? ?? defaultFeedbackWrong,
       codeTemplate: json['codeTemplate'] as String,
       blanks: (json['blanks'] as List<dynamic>)
           .map((e) => BlankSlot.fromJson(e as Map<String, dynamic>))

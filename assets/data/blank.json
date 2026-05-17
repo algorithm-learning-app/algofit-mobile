@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "type": "blank",
+  "updatedAt": "2026-05-17",
+  "questions": [
+    {
+      "id": "blank_arr_001",
+      "type": "blank",
+      "version": 1,
+      "language": "python",
+      "stem": "배열 nums의 원소 합을 구하는 코드입니다. 빈칸을 채우세요.",
+      "tags": ["array"],
+      "difficulty": 1,
+      "codeTemplate": "def array_sum(nums):\n    total = 0\n    for x in {{b1}}:\n        total += x\n    return total",
+      "blanks": [
+        {
+          "id": "b1",
+          "correctAnswers": ["nums"],
+          "choices": ["nums", "range(len(nums))", "nums.values()", "stack"]
+        }
+      ],
+      "explanation": "원소를 직접 순회하려면 `for x in nums`가 맞습니다. 인덱스가 필요하면 `range(len(nums))`를 쓰지만, 이 코드는 값만 더합니다."
+    },
+    {
+      "id": "blank_tp_002",
+      "type": "blank",
+      "version": 1,
+      "language": "python",
+      "stem": "오름차순 배열에서 두 수의 합이 target인 인덱스 쌍을 찾는 투 포인터 코드입니다. 빈칸을 채우세요.",
+      "tags": ["two_pointer"],
+      "difficulty": 2,
+      "codeTemplate": "def two_sum_sorted(nums, target):\n    left, right = 0, len(nums) - 1\n    while left < right:\n        s = nums[left] + nums[right]\n        if s == target:\n            return left, right\n        elif s < target:\n            {{b1}}\n        else:\n            right -= 1\n    return -1, -1",
+      "blanks": [
+        {
+          "id": "b1",
+          "correctAnswers": ["left += 1"],
+          "choices": ["left += 1", "left -= 1", "right += 1", "left = right"]
+        }
+      ],
+      "explanation": "합이 target보다 작으면 더 큰 값이 필요하므로 왼쪽 포인터를 오른쪽으로 옮깁니다. 합이 크면 right를 줄입니다."
+    },
+    {
+      "id": "blank_hash_002",
+      "type": "blank",
+      "version": 1,
+      "language": "python",
+      "stem": "배열에서 complement = target - nums[i]가 이미 봤는지 해시로 확인하는 두 수의 합 코드입니다. 빈칸을 채우세요.",
+      "tags": ["hash"],
+      "difficulty": 2,
+      "codeTemplate": "def two_sum(nums, target):\n    seen = {}\n    for i, x in enumerate(nums):\n        need = target - x\n        if need in {{b1}}:\n            return seen[need], i\n        seen[x] = i\n    return -1, -1",
+      "blanks": [
+        {
+          "id": "b1",
+          "correctAnswers": ["seen"],
+          "choices": ["seen", "nums", "i", "target"]
+        }
+      ],
+      "explanation": "이미 지나온 값과 인덱스는 `seen` 딕셔너리에 있습니다. complement가 키로 존재하면 쌍을 찾은 것입니다."
+    },
+    {
+      "id": "blank_bs_002",
+      "type": "blank",
+      "version": 1,
+      "language": "python",
+      "stem": "정렬된 배열에서 target의 인덱스를 반환하는 이분 탐색입니다. 빈칸을 채우세요.",
+      "tags": ["binary_search"],
+      "difficulty": 2,
+      "codeTemplate": "def binary_search(nums, target):\n    lo, hi = 0, len(nums) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if nums[mid] == target:\n            return mid\n        elif nums[mid] < target:\n            {{b1}}\n        else:\n            hi = mid - 1\n    return -1",
+      "blanks": [
+        {
+          "id": "b1",
+          "correctAnswers": ["lo = mid + 1"],
+          "choices": ["lo = mid + 1", "lo = mid", "hi = mid + 1", "lo = mid - 1"]
+        }
+      ],
+      "explanation": "중간 값이 target보다 작으면 왼쪽 구간을 버리고 `lo`를 `mid + 1`로 올립니다. `lo = mid`는 무한 루프 위험이 있습니다."
+    },
+    {
+      "id": "blank_stack_002",
+      "type": "blank",
+      "version": 1,
+      "language": "python",
+      "stem": "스택을 이용해 괄호 문자열이 유효한지 검사합니다. 빈칸을 채우세요.",
+      "tags": ["stack"],
+      "difficulty": 2,
+      "codeTemplate": "def is_valid(s):\n    stack = []\n    pairs = {')': '(', ']': '[', '}': '{'}\n    for ch in s:\n        if ch in '([{':\n            stack.append(ch)\n        elif ch in ')]}':\n            if not stack or stack[-1] != {{b1}}:\n                return False\n            stack.pop()\n    return len(stack) == 0",
+      "blanks": [
+        {
+          "id": "b1",
+          "correctAnswers": ["pairs[ch]"],
+          "choices": ["pairs[ch]", "ch", "stack[0]", "pairs[stack[-1]]"]
+        }
+      ],
+      "explanation": "닫는 괄호 ch에 대응하는 여는 괄호는 `pairs[ch]`입니다. 스택 top과 일치해야 짝이 맞습니다."
+    }
+  ]
+}

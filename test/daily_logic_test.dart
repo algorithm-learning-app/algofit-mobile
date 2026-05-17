@@ -85,9 +85,45 @@ void main() {
     expect(progress.todayDailyCompleted, isTrue);
   });
 
-  test('loadDailyPack은 JSON 에셋에서 5문항을 로드한다', () async {
+  test('loadQuestionPools는 pick/blank JSON 풀을 로드한다', () async {
+    final pools = await loadQuestionPools();
+    expect(pools.picks.length, 6);
+    expect(pools.blanks.length, 5);
+    expect(pools.picks.every((q) => q.id.startsWith('pick_')), isTrue);
+    expect(pools.blanks.every((q) => q.id.startsWith('blank_')), isTrue);
+  });
+
+  test('loadDailyPack은 3 pick + 2 blank로 5문항을 구성한다', () async {
     final pack = await loadDailyPack();
-    expect(pack.id, 'daily_sample_001');
     expect(pack.questions.length, dailyTotal);
+    expect(pack.title, '오늘의 챌린지');
+    expect(pack.id, startsWith('daily_'));
+
+    final pickCount =
+        pack.questions.whereType<PickQuestion>().length;
+    final blankCount =
+        pack.questions.whereType<BlankQuestion>().length;
+    expect(pickCount, dailyPickCount);
+    expect(blankCount, dailyBlankCount);
+  });
+
+  test('composeDailyPack은 같은 서울 날짜에 동일한 문항 ID 순서', () async {
+    final pools = await loadQuestionPools();
+    const dateKey = '2026-05-18';
+
+    final packA = composeDailyPack(pools, dateKey);
+    final packB = composeDailyPack(pools, dateKey);
+
+    expect(packA.id, 'daily_2026_05_18');
+    expect(
+      packA.questions.map((q) => q.id),
+      packB.questions.map((q) => q.id),
+    );
+    expect(packA.questions.length, dailyTotal);
+  });
+
+  test('seoulDateKey는 UTC 기준 서울 달력일을 반환한다', () {
+    final utc = DateTime.utc(2026, 5, 17, 20, 0);
+    expect(seoulDateKey(utc), '2026-05-18');
   });
 }
