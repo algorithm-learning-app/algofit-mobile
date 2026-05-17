@@ -18,5 +18,6 @@ void main() {
     expect(find.text('오늘의 챌린지'), findsOneWidget);
     expect(find.text('시작하기'), findsOneWidget);
     expect(find.text('World 1'), findsOneWidget);
+    expect(find.text('전체 보기'), findsOneWidget);
   });
 }
