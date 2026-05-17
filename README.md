@@ -1,3 +1,26 @@
-# algofit-mobile
+# 알고핏 모바일 (Flutter)
 
-알고핏 iOS/Android Flutter 앱 저장소.
+iOS·Android용 **모바일 앱**. Daily·스트릭·Pick/Blank 짧은 세션·홈·World 맵의 기준 구현입니다.
+
+PC 웹은 [algofit-web](https://github.com/algorithm-learning-app/algofit-web) 저장소를 참고하세요.
+
+## 실행
+
+```bash
+flutter pub get
+flutter run
+```
+
+시뮬레이터: `flutter devices` 후 `flutter run -d <device_id>`
+
+## 패키지
+
+- Android/iOS: `com.algofit.algofit`
+- Material 3, 다크 테마
+
+## 현재 범위
+
+| 포함 | 미포함 |
+|------|--------|
+| 홈 UI (스트릭, XP, Daily 카드, 하단 탭) | Daily 5문항 플로우 |
+| 마스코트 에셋 | 로컬 진행 저장 |
