@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../screens/daily/daily_challenge_screen.dart';
 import '../screens/daily/daily_complete_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../data/world1_stage_questions.dart';
 import '../screens/world/stage_placeholder_screen.dart';
+import '../screens/world/stage_play_screen.dart';
 import '../screens/world/world_map_screen.dart';
 import '../services/progress_repository.dart';
 GoRouter createAppRouter(ProgressRepository repo) {
@@ -29,6 +31,13 @@ GoRouter createAppRouter(ProgressRepository repo) {
               final worldId =
                   int.tryParse(state.pathParameters['worldId'] ?? '') ?? 1;
               final stageId = state.pathParameters['stageId'] ?? '';
+              if (hasWorld1StageContent(stageId)) {
+                return StagePlayScreen(
+                  repo: repo,
+                  worldId: worldId,
+                  stageId: stageId,
+                );
+              }
               return StagePlaceholderScreen(
                 worldId: worldId,
                 stageId: stageId,
