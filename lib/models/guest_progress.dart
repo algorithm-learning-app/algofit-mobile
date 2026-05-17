@@ -1,8 +1,50 @@
 enum WorldNodeState { locked, current, cleared }
 
+const defaultWorld1Nodes = <WorldNodeState>[
+  WorldNodeState.current,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+];
+
+const defaultWorld2NodesLocked = <WorldNodeState>[
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+];
+
+const defaultWorld2NodesUnlocked = <WorldNodeState>[
+  WorldNodeState.current,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+];
+
+List<WorldNodeState> defaultWorld2Nodes({bool unlocked = false}) =>
+    unlocked ? defaultWorld2NodesUnlocked : defaultWorld2NodesLocked;
+
 class GuestProgress {
-  const GuestProgress({
-    this.schemaVersion = 2,
+  GuestProgress({
+    this.schemaVersion = 3,
     this.guestId = '',
     this.level = 1,
     this.xp = 0,
@@ -16,16 +58,13 @@ class GuestProgress {
     this.dailyPickCount = 3,
     this.dailyBlankCount = 2,
     this.hearts = 5,
-    this.world1Nodes = const [
-      WorldNodeState.cleared,
-      WorldNodeState.cleared,
-      WorldNodeState.current,
-      WorldNodeState.locked,
-      WorldNodeState.locked,
-      WorldNodeState.locked,
-      WorldNodeState.locked,
-    ],
-  });
+    List<WorldNodeState>? world1Nodes,
+    List<WorldNodeState>? world2Nodes,
+    this.world2Unlocked = false,
+    this.clearedQuestionIds = const [],
+    this.wrongQuestionIds = const [],
+  })  : world1Nodes = world1Nodes ?? defaultWorld1Nodes,
+        world2Nodes = world2Nodes ?? defaultWorld2NodesLocked;
 
   final int schemaVersion;
   final String guestId;
@@ -42,9 +81,18 @@ class GuestProgress {
   final int dailyBlankCount;
   final int hearts;
   final List<WorldNodeState> world1Nodes;
+  final List<WorldNodeState> world2Nodes;
+  final bool world2Unlocked;
+  final List<String> clearedQuestionIds;
+  final List<String> wrongQuestionIds;
 
   double get xpPercent =>
       xpToNextLevel > 0 ? (xp / xpToNextLevel).clamp(0.0, 1.0) : 0.0;
+
+  int get world1ClearedCount =>
+      world1Nodes.where((n) => n == WorldNodeState.cleared).length;
+
+  bool get isWorld1Complete => world1ClearedCount >= 20;
 
   String get dailyCtaLabel {
     if (todayDailyCompleted) return '결과 보기';
@@ -64,6 +112,10 @@ class GuestProgress {
     int? dailyProgress,
     int? hearts,
     List<WorldNodeState>? world1Nodes,
+    List<WorldNodeState>? world2Nodes,
+    bool? world2Unlocked,
+    List<String>? clearedQuestionIds,
+    List<String>? wrongQuestionIds,
   }) {
     return GuestProgress(
       schemaVersion: schemaVersion,
@@ -82,6 +134,10 @@ class GuestProgress {
       dailyBlankCount: dailyBlankCount,
       hearts: hearts ?? this.hearts,
       world1Nodes: world1Nodes ?? this.world1Nodes,
+      world2Nodes: world2Nodes ?? this.world2Nodes,
+      world2Unlocked: world2Unlocked ?? this.world2Unlocked,
+      clearedQuestionIds: clearedQuestionIds ?? this.clearedQuestionIds,
+      wrongQuestionIds: wrongQuestionIds ?? this.wrongQuestionIds,
     );
   }
 
@@ -101,11 +157,22 @@ class GuestProgress {
         'dailyBlankCount': dailyBlankCount,
         'hearts': hearts,
         'world1Nodes': world1Nodes.map(_worldNodeToString).toList(),
+        'world2Nodes': world2Nodes.map(_worldNodeToString).toList(),
+        'world2Unlocked': world2Unlocked,
+        'clearedQuestionIds': clearedQuestionIds,
+        'wrongQuestionIds': wrongQuestionIds,
       };
 
   factory GuestProgress.fromJson(Map<String, dynamic> json) {
+    final version = json['schemaVersion'] as int? ?? 2;
+    final world1 = _parseWorldNodes(
+      json['world1Nodes'],
+      fallback: defaultWorld1Nodes,
+    );
+    final w2Unlocked = json['world2Unlocked'] as bool? ??
+        (version >= 3 && world1.where((n) => n == WorldNodeState.cleared).length >= 7);
     return GuestProgress(
-      schemaVersion: json['schemaVersion'] as int? ?? 2,
+      schemaVersion: version < 3 ? 3 : version,
       guestId: json['guestId'] as String? ?? '',
       level: json['level'] as int? ?? 1,
       xp: json['xp'] as int? ?? 0,
@@ -121,22 +188,27 @@ class GuestProgress {
       dailyPickCount: json['dailyPickCount'] as int? ?? 3,
       dailyBlankCount: json['dailyBlankCount'] as int? ?? 2,
       hearts: json['hearts'] as int? ?? 5,
-      world1Nodes: _parseWorldNodes(json['world1Nodes']),
+      world1Nodes: world1,
+      world2Nodes: _parseWorldNodes(
+        json['world2Nodes'],
+        fallback: defaultWorld2Nodes(unlocked: w2Unlocked),
+      ),
+      world2Unlocked: w2Unlocked,
+      clearedQuestionIds: _parseStringList(json['clearedQuestionIds']),
+      wrongQuestionIds: _parseStringList(json['wrongQuestionIds']),
     );
   }
 
-  static List<WorldNodeState> _parseWorldNodes(dynamic raw) {
-    if (raw is! List) {
-      return const [
-        WorldNodeState.cleared,
-        WorldNodeState.cleared,
-        WorldNodeState.current,
-        WorldNodeState.locked,
-        WorldNodeState.locked,
-        WorldNodeState.locked,
-        WorldNodeState.locked,
-      ];
-    }
+  static List<String> _parseStringList(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw.map((e) => e.toString()).toList();
+  }
+
+  static List<WorldNodeState> _parseWorldNodes(
+    dynamic raw, {
+    required List<WorldNodeState> fallback,
+  }) {
+    if (raw is! List) return fallback;
     return raw.map((e) {
       switch (e) {
         case 'cleared':

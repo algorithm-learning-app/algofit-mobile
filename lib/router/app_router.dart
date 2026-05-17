@@ -1,13 +1,17 @@
 import 'package:go_router/go_router.dart';
 
+import '../screens/algorithm/algorithm_detail_screen.dart';
+import '../screens/algorithm/algorithm_catalog_screen.dart';
 import '../screens/daily/daily_challenge_screen.dart';
 import '../screens/daily/daily_complete_screen.dart';
 import '../screens/home/home_screen.dart';
-import '../data/world1_stage_questions.dart';
+import '../data/stage_questions.dart';
+import '../screens/review/review_screen.dart';
 import '../screens/world/stage_placeholder_screen.dart';
 import '../screens/world/stage_play_screen.dart';
 import '../screens/world/world_map_screen.dart';
 import '../services/progress_repository.dart';
+
 GoRouter createAppRouter(ProgressRepository repo) {
   return GoRouter(
     initialLocation: '/home',
@@ -16,6 +20,26 @@ GoRouter createAppRouter(ProgressRepository repo) {
       GoRoute(
         path: '/home',
         builder: (context, state) => HomeScreen(repo: repo),
+      ),
+      GoRoute(
+        path: '/review',
+        builder: (context, state) => ReviewScreen(repo: repo),
+      ),
+      GoRoute(
+        path: '/algorithm',
+        builder: (context, state) => AlgorithmCatalogScreen(repo: repo),
+        routes: [
+          GoRoute(
+            path: ':algorithmId',
+            builder: (context, state) {
+              final algorithmId = state.pathParameters['algorithmId'] ?? '';
+              return AlgorithmDetailScreen(
+                repo: repo,
+                algorithmId: algorithmId,
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/world/:worldId',
@@ -31,7 +55,7 @@ GoRouter createAppRouter(ProgressRepository repo) {
               final worldId =
                   int.tryParse(state.pathParameters['worldId'] ?? '') ?? 1;
               final stageId = state.pathParameters['stageId'] ?? '';
-              if (hasWorld1StageContent(stageId)) {
+              if (hasStageContent(stageId)) {
                 return StagePlayScreen(
                   repo: repo,
                   worldId: worldId,

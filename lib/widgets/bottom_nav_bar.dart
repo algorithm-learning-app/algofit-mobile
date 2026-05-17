@@ -14,11 +14,14 @@ class AlgofitBottomNavBar extends StatelessWidget {
   static const _tabs = [
     (path: '/home', icon: Icons.home_rounded, label: '홈'),
     (path: '/world/1', icon: Icons.menu_book_rounded, label: '학습'),
-    (path: null, icon: Icons.person_rounded, label: '프로필'),
+    (path: '/review', icon: Icons.replay_rounded, label: '복습'),
+    (path: '/algorithm', icon: Icons.hub_rounded, label: '알고리즘'),
   ];
 
   static int indexForLocation(String location) {
     if (location.startsWith('/world')) return 1;
+    if (location.startsWith('/review')) return 2;
+    if (location.startsWith('/algorithm')) return 3;
     if (location.startsWith('/home')) return 0;
     return 0;
   }
@@ -28,17 +31,7 @@ class AlgofitBottomNavBar extends StatelessWidget {
     return NavigationBar(
       selectedIndex: currentIndex,
       onDestinationSelected: (index) {
-        final tab = _tabs[index];
-        if (tab.path == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('프로필은 준비 중이에요.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-          return;
-        }
-        context.go(tab.path!);
+        context.go(_tabs[index].path);
       },
       backgroundColor: AppColors.surface,
       indicatorColor: AppColors.primary.withValues(alpha: 0.2),

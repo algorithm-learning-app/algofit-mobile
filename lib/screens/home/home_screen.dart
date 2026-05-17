@@ -373,7 +373,7 @@ class _WorldPreview extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    for (var i = 0; i < nodes.length; i++)
+                    for (var i = 0; i < nodes.length && i < 5; i++)
                       _WorldNode(index: i + 1, state: nodes[i]),
                   ],
                 ),

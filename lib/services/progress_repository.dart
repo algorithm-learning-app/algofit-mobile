@@ -5,11 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/world1_stages.dart';
+import '../data/world2_stages.dart';
 import '../models/daily_session.dart';
 import '../models/guest_progress.dart';
 import '../models/world_stage.dart';
 import 'daily_service.dart';
 import 'stage_service.dart';
+
+const world2UnlockClearedCount = 7;
 
 const _progressKey = 'algofit:guestProgress';
 const _guestIdKey = 'algofit:guestId';
@@ -27,7 +30,7 @@ class ProgressRepository extends ChangeNotifier {
   ProgressRepository(this._prefs);
 
   final SharedPreferences _prefs;
-  GuestProgress _progress = const GuestProgress();
+  GuestProgress _progress = GuestProgress();
   DailySession? _dailySession;
 
   GuestProgress get progress => _progress;
@@ -135,8 +138,9 @@ class ProgressRepository extends ChangeNotifier {
 
   ({GuestProgress progress, DailySession session}) recordDailyAnswer(
     DailySession session,
-    bool isCorrect,
-  ) {
+    bool isCorrect, {
+    String? questionId,
+  }) {
     const xpGain = dailyXpPerQuestion;
     final nextSession = session.copyWith(
       answers: [...session.answers, isCorrect],
@@ -151,6 +155,15 @@ class ProgressRepository extends ChangeNotifier {
       dailyProgress: nextSession.answers.length,
       hearts: nextSession.hearts,
     );
+    if (questionId != null) {
+      if (isCorrect) {
+        nextProgress = _withQuestionCleared(nextProgress, questionId);
+      } else {
+        final wrong = List<String>.from(nextProgress.wrongQuestionIds);
+        if (!wrong.contains(questionId)) wrong.add(questionId);
+        nextProgress = nextProgress.copyWith(wrongQuestionIds: wrong);
+      }
+    }
 
     _progress = nextProgress;
     _dailySession = nextSession;
@@ -208,7 +221,62 @@ class ProgressRepository extends ChangeNotifier {
     return (session.questionIndex + 1).clamp(1, dailyTotal);
   }
 
-  GuestProgress completeWorld1Stage(int stageOrder) {
+  GuestProgress _withQuestionCleared(GuestProgress base, String? questionId) {
+    if (questionId == null) return base;
+    final cleared = List<String>.from(base.clearedQuestionIds);
+    if (!cleared.contains(questionId)) {
+      cleared.add(questionId);
+    }
+    final wrong = List<String>.from(base.wrongQuestionIds)..remove(questionId);
+    return base.copyWith(
+      clearedQuestionIds: cleared,
+      wrongQuestionIds: wrong,
+    );
+  }
+
+  GuestProgress recordQuestionOutcome({
+    required String questionId,
+    required bool isCorrect,
+  }) {
+    var cleared = List<String>.from(_progress.clearedQuestionIds);
+    var wrong = List<String>.from(_progress.wrongQuestionIds);
+
+    if (isCorrect) {
+      if (!cleared.contains(questionId)) {
+        cleared.add(questionId);
+      }
+      wrong.remove(questionId);
+    } else {
+      if (!wrong.contains(questionId)) {
+        wrong.add(questionId);
+      }
+    }
+
+    final next = _progress.copyWith(
+      clearedQuestionIds: cleared,
+      wrongQuestionIds: wrong,
+    );
+    _progress = next;
+    _saveProgress();
+    notifyListeners();
+    return next;
+  }
+
+  GuestProgress completeWorldStage({
+    required int worldId,
+    required int stageOrder,
+    String? questionId,
+  }) {
+    if (worldId == 1) {
+      return _completeWorld1Stage(stageOrder, questionId);
+    }
+    if (worldId == 2) {
+      return _completeWorld2Stage(stageOrder, questionId);
+    }
+    return _progress;
+  }
+
+  GuestProgress _completeWorld1Stage(int stageOrder, String? questionId) {
     var nodes = List<WorldNodeState>.from(_progress.world1Nodes);
     while (nodes.length < world1MapStages.length) {
       nodes.add(WorldNodeState.locked);
@@ -220,7 +288,7 @@ class ProgressRepository extends ChangeNotifier {
 
     final updatedNodes = alreadyCleared
         ? nodes
-        : advanceWorld1NodesAfterClear(
+        : advanceWorldNodesAfterClear(
             nodes: nodes,
             clearedStageOrder: stageOrder,
             mapStageCount: world1MapStages.length,
@@ -230,9 +298,55 @@ class ProgressRepository extends ChangeNotifier {
         ? _progress
         : addXp(_progress, stageXpPerQuestion);
     next = next.copyWith(world1Nodes: updatedNodes);
+    next = _withQuestionCleared(next, questionId);
+
+    final clearedCount =
+        updatedNodes.where((n) => n == WorldNodeState.cleared).length;
+    if (clearedCount >= world2UnlockClearedCount && !next.world2Unlocked) {
+      next = next.copyWith(
+        world2Unlocked: true,
+        world2Nodes: defaultWorld2Nodes(unlocked: true),
+      );
+    }
+
     _progress = next;
     _saveProgress();
     notifyListeners();
     return next;
   }
+
+  GuestProgress _completeWorld2Stage(int stageOrder, String? questionId) {
+    if (!_progress.world2Unlocked) return _progress;
+
+    var nodes = List<WorldNodeState>.from(_progress.world2Nodes);
+    while (nodes.length < world2MapStages.length) {
+      nodes.add(WorldNodeState.locked);
+    }
+
+    final idx = stageOrder - 1;
+    final alreadyCleared =
+        idx >= 0 && idx < nodes.length && nodes[idx] == WorldNodeState.cleared;
+
+    final updatedNodes = alreadyCleared
+        ? nodes
+        : advanceWorldNodesAfterClear(
+            nodes: nodes,
+            clearedStageOrder: stageOrder,
+            mapStageCount: world2MapStages.length,
+          );
+
+    var next = alreadyCleared
+        ? _progress
+        : addXp(_progress, stageXpPerQuestion);
+    next = next.copyWith(world2Nodes: updatedNodes);
+    next = _withQuestionCleared(next, questionId);
+    _progress = next;
+    _saveProgress();
+    notifyListeners();
+    return next;
+  }
+
+  @Deprecated('Use completeWorldStage(worldId: 1, ...)')
+  GuestProgress completeWorld1Stage(int stageOrder) =>
+      completeWorldStage(worldId: 1, stageOrder: stageOrder);
 }
