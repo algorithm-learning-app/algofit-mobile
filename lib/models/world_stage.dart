@@ -26,7 +26,7 @@ WorldNodeState worldStageNodeState({
 }
 
 /// 스테이지 클리어 후 맵 노드 갱신 (order는 1-based)
-List<WorldNodeState> advanceWorld1NodesAfterClear({
+List<WorldNodeState> advanceWorldNodesAfterClear({
   required List<WorldNodeState> nodes,
   required int clearedStageOrder,
   required int mapStageCount,

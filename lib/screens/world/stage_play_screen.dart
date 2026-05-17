@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/world1_stages.dart';
+import '../../data/world2_stages.dart';
 import '../../models/daily_question.dart';
 import '../../models/guest_progress.dart';
 import '../../models/world_stage.dart';
@@ -34,8 +35,15 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
   bool _showComplete = false;
   bool? _lastCorrect;
 
+  List<WorldStage> get _mapStages =>
+      widget.worldId == 2 ? world2MapStages : world1MapStages;
+
+  List<WorldNodeState> get _progressNodes => widget.worldId == 2
+      ? widget.repo.progress.world2Nodes
+      : widget.repo.progress.world1Nodes;
+
   WorldStage? get _stage {
-    for (final stage in world1MapStages) {
+    for (final stage in _mapStages) {
       if (stage.id == widget.stageId) return stage;
     }
     return null;
@@ -44,9 +52,12 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
   WorldNodeState get _nodeState {
     final stage = _stage;
     if (stage == null) return WorldNodeState.locked;
+    if (widget.worldId == 2 && !widget.repo.progress.world2Unlocked) {
+      return WorldNodeState.locked;
+    }
     return worldStageNodeState(
       stageOrder: stage.order,
-      progressNodes: widget.repo.progress.world1Nodes,
+      progressNodes: _progressNodes,
     );
   }
 
@@ -68,6 +79,13 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
   }
 
   void _handleSubmit(bool isCorrect) {
+    final q = _question;
+    if (q != null) {
+      widget.repo.recordQuestionOutcome(
+        questionId: q.id,
+        isCorrect: isCorrect,
+      );
+    }
     setState(() {
       _lastCorrect = isCorrect;
       _showFeedback = true;
@@ -81,8 +99,13 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
     }
 
     final stage = _stage;
+    final q = _question;
     if (stage != null && _nodeState != WorldNodeState.locked) {
-      widget.repo.completeWorld1Stage(stage.order);
+      widget.repo.completeWorldStage(
+        worldId: widget.worldId,
+        stageOrder: stage.order,
+        questionId: q?.id,
+      );
     }
 
     setState(() {
@@ -105,7 +128,7 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
             onPressed: () => context.pop(),
             icon: const Icon(Icons.close_rounded),
           ),
-          title: Text(order != null ? '1-$order' : title),
+          title: Text(order != null ? '${widget.worldId}-$order' : title),
         ),
         body: Center(
           child: Padding(

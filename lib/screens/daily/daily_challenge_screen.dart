@@ -75,7 +75,11 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
     final step = widget.step;
     if (session == null || step == null) return;
 
-    widget.repo.recordDailyAnswer(session, isCorrect);
+    widget.repo.recordDailyAnswer(
+      session,
+      isCorrect,
+      questionId: _question?.id,
+    );
     if (mounted) {
       context.go('/daily/$step/feedback');
     }

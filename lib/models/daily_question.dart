@@ -71,6 +71,7 @@ class PickQuestion extends DailyQuestion {
     required super.feedbackWrong,
     required this.choices,
     required this.correctChoiceId,
+    this.tags = const [],
   });
 
   factory PickQuestion.fromJson(Map<String, dynamic> json) {
@@ -85,11 +86,16 @@ class PickQuestion extends DailyQuestion {
           .map((e) => DailyChoice.fromJson(e as Map<String, dynamic>))
           .toList(),
       correctChoiceId: json['correctChoiceId'] as String,
+      tags: (json['tags'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
   }
 
   final List<DailyChoice> choices;
   final String correctChoiceId;
+  final List<String> tags;
 }
 
 class BlankQuestion extends DailyQuestion {
@@ -101,6 +107,7 @@ class BlankQuestion extends DailyQuestion {
     required super.feedbackWrong,
     required this.codeTemplate,
     required this.blanks,
+    this.tags = const [],
   });
 
   factory BlankQuestion.fromJson(Map<String, dynamic> json) {
@@ -115,11 +122,16 @@ class BlankQuestion extends DailyQuestion {
       blanks: (json['blanks'] as List<dynamic>)
           .map((e) => BlankSlot.fromJson(e as Map<String, dynamic>))
           .toList(),
+      tags: (json['tags'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
   }
 
   final String codeTemplate;
   final List<BlankSlot> blanks;
+  final List<String> tags;
 }
 
 class DailyPack {

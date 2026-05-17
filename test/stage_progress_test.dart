@@ -1,4 +1,5 @@
 import 'package:algofit/models/guest_progress.dart';
+import 'package:algofit/data/world1_stages.dart';
 import 'package:algofit/models/world_stage.dart';
 import 'package:algofit/services/daily_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('advanceWorld1NodesAfterClear', () {
+  group('advanceWorldNodesAfterClear', () {
     test('clears current stage and unlocks next', () {
       const nodes = [
         WorldNodeState.cleared,
@@ -14,10 +15,10 @@ void main() {
         WorldNodeState.current,
         WorldNodeState.locked,
       ];
-      final next = advanceWorld1NodesAfterClear(
+      final next = advanceWorldNodesAfterClear(
         nodes: nodes,
         clearedStageOrder: 3,
-        mapStageCount: 7,
+        mapStageCount: world1MapStages.length,
       );
       expect(next[2], WorldNodeState.cleared);
       expect(next[3], WorldNodeState.current);

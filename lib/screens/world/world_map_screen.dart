@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/world1_stages.dart';
+import '../../data/world2_stages.dart';
 import '../../models/guest_progress.dart';
 import '../../models/world_stage.dart';
 import '../../services/progress_repository.dart';
@@ -21,14 +22,27 @@ class WorldMapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (worldId != 1) {
+    if (worldId != 1 && worldId != 2) {
       return _UnsupportedWorld(worldId: worldId);
     }
 
     return ListenableBuilder(
       listenable: repo,
       builder: (context, _) {
-        final nodes = repo.progress.world1Nodes;
+        final progress = repo.progress;
+        final isWorld2 = worldId == 2;
+        if (isWorld2 && !progress.world2Unlocked) {
+          return _WorldLocked(repo: repo);
+        }
+
+        final stages = isWorld2 ? world2MapStages : world1MapStages;
+        final nodes = isWorld2 ? progress.world2Nodes : progress.world1Nodes;
+        final title = isWorld2 ? world2Title : world1Title;
+        final subtitle = isWorld2 ? world2Subtitle : world1Subtitle;
+        final total = isWorld2 ? world2TotalStages : world1TotalStages;
+        final clearedCount =
+            nodes.where((n) => n == WorldNodeState.cleared).length;
+
         return Scaffold(
           body: SafeArea(
             child: Center(
@@ -40,9 +54,13 @@ class WorldMapScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                         child: _WorldMapHeader(
-                          clearedCount: nodes
-                              .where((n) => n == WorldNodeState.cleared)
-                              .length,
+                          worldId: worldId,
+                          title: title,
+                          subtitle: subtitle,
+                          clearedCount: clearedCount,
+                          totalStages: total,
+                          mapStageCount: stages.length,
+                          world2Unlocked: progress.world2Unlocked,
                         ),
                       ),
                     ),
@@ -51,7 +69,7 @@ class WorldMapScreen extends StatelessWidget {
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
-                            final stage = world1MapStages[index];
+                            final stage = stages[index];
                             final state = worldStageNodeState(
                               stageOrder: stage.order,
                               progressNodes: nodes,
@@ -59,9 +77,7 @@ class WorldMapScreen extends StatelessWidget {
                             final alignRight = index.isOdd;
                             return Padding(
                               padding: EdgeInsets.only(
-                                bottom: index < world1MapStages.length - 1
-                                    ? 8
-                                    : 0,
+                                bottom: index < stages.length - 1 ? 8 : 0,
                               ),
                               child: _MapRow(
                                 alignRight: alignRight,
@@ -77,7 +93,7 @@ class WorldMapScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          childCount: world1MapStages.length,
+                          childCount: stages.length,
                         ),
                       ),
                     ),
@@ -94,9 +110,23 @@ class WorldMapScreen extends StatelessWidget {
 }
 
 class _WorldMapHeader extends StatelessWidget {
-  const _WorldMapHeader({required this.clearedCount});
+  const _WorldMapHeader({
+    required this.worldId,
+    required this.title,
+    required this.subtitle,
+    required this.clearedCount,
+    required this.totalStages,
+    required this.mapStageCount,
+    required this.world2Unlocked,
+  });
 
+  final int worldId;
+  final String title;
+  final String subtitle;
   final int clearedCount;
+  final int totalStages;
+  final int mapStageCount;
+  final bool world2Unlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +151,7 @@ class _WorldMapHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                '$clearedCount / $world1TotalStages',
+                '$clearedCount / $totalStages',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -132,26 +162,68 @@ class _WorldMapHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
+        Row(
+          children: [
+            _WorldChip(
+              label: 'World 1',
+              selected: worldId == 1,
+              onTap: () => context.go('/world/1'),
+            ),
+            const SizedBox(width: 8),
+            _WorldChip(
+              label: 'World 2',
+              selected: worldId == 2,
+              locked: !world2Unlocked,
+              onTap: world2Unlocked
+                  ? () => context.go('/world/2')
+                  : null,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Text(
-          world1Title,
+          title,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
         ),
         const SizedBox(height: 4),
-        const Text(
-          world1Subtitle,
-          style: TextStyle(fontSize: 14, color: AppColors.muted),
+        Text(
+          subtitle,
+          style: const TextStyle(fontSize: 14, color: AppColors.muted),
         ),
         const SizedBox(height: 12),
         Text(
-          '맵에는 ${world1MapStages.length}개 스테이지 · 전체 $world1TotalStages개',
+          '맵 $mapStageCount개 스테이지 · 전체 $totalStages개',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.muted.withValues(alpha: 0.85),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _WorldChip extends StatelessWidget {
+  const _WorldChip({
+    required this.label,
+    required this.selected,
+    this.locked = false,
+    this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool locked;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(locked ? '$label 🔒' : label),
+      selected: selected,
+      onSelected: onTap == null ? null : (_) => onTap!(),
     );
   }
 }
@@ -205,6 +277,42 @@ class _MapRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _WorldLocked extends StatelessWidget {
+  const _WorldLocked({required this.repo});
+
+  final ProgressRepository repo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('World 2')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('🔒', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 16),
+              Text(
+                'World 1을 $world2UnlockClearedCount스테이지 이상 클리어하면 열려요',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => context.go('/world/1'),
+                child: const Text('World 1으로'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: const AlgofitBottomNavBar(currentIndex: 1),
     );
   }
 }
