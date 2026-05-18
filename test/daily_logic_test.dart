@@ -55,14 +55,15 @@ void main() {
     );
   });
 
-  test('recordDailyAnswer는 오답 시 하트를 1 감소시킨다', () async {
+  test('recordDailyAnswer는 Daily에서 하트를 소모하지 않는다', () async {
     final repo = await ProgressRepository.create();
     var session = repo.startDailySession();
 
     final result = repo.recordDailyAnswer(session, false);
     session = result.session;
 
-    expect(session.hearts, 4);
+    expect(session.hearts, 5);
+    expect(result.progress.hearts, 5);
     expect(session.xpEarned, dailyXpPerQuestion);
     expect(result.progress.xp, dailyXpPerQuestion);
   });
