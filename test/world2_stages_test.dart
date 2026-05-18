@@ -1,3 +1,4 @@
+import 'package:algofit/data/stage_questions.dart';
 import 'package:algofit/data/world2_stage_questions.dart';
 import 'package:algofit/data/world2_stages.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,5 +15,8 @@ void main() {
       );
     }
     expect(world2StageQuestions.length, world2MapStages.length);
+    for (final stage in world2MapStages) {
+      expect(stageQuestionCount(stage.id), stageMiniSetSize, reason: stage.id);
+    }
   });
 }
