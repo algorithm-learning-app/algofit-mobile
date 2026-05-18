@@ -7,55 +7,100 @@
 #
 # Usage (from apps/mobile/ios):
 #   bundle install
-#   bundle exec fastlane build   # IPA only
-#   bundle exec fastlane beta    # IPA + upload_to_testflight
+#   bundle exec fastlane build        # iOS IPA only
+#   bundle exec fastlane beta         # iOS IPA + TestFlight
+#   bundle exec fastlane beta_mac     # macOS pkg + TestFlight
 
 default_platform(:ios)
 
-platform :ios do
-  FLUTTER_ROOT = File.expand_path("../..", __dir__)
+FLUTTER_ROOT = File.expand_path("../..", __dir__)
 
-  def flutter_ipa_path
-    pattern = File.join(FLUTTER_ROOT, "build/ios/ipa/*.ipa")
-    matches = Dir[pattern]
-    UI.user_error!("No IPA found at #{pattern}. Run flutter build ipa first.") if matches.empty?
-    matches.max_by { |p| File.mtime(p) }
+def flutter_ipa_path
+  pattern = File.join(FLUTTER_ROOT, "build/ios/ipa/*.ipa")
+  matches = Dir[pattern]
+  UI.user_error!("No IPA found at #{pattern}. Run flutter build ipa first.") if matches.empty?
+  matches.max_by { |p| File.mtime(p) }
+end
+
+def build_flutter_ipa
+  team = ENV["DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
+  UI.important("DEVELOPMENT_TEAM / FASTLANE_TEAM_ID not set — Xcode must resolve signing.") unless team
+
+  Dir.chdir(FLUTTER_ROOT) do
+    sh("flutter", "pub", "get")
+    build_args = ["build", "ipa", "--release"]
+    sh("flutter", *build_args)
   end
 
-  def build_flutter_ipa
-    team = ENV["DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
-    UI.important("DEVELOPMENT_TEAM / FASTLANE_TEAM_ID not set — Xcode must resolve signing.") unless team
+  ipa = flutter_ipa_path
+  UI.success("IPA: #{ipa}")
+  ipa
+end
 
-    Dir.chdir(FLUTTER_ROOT) do
-      sh("flutter", "pub", "get")
-      build_args = ["build", "ipa", "--release"]
-      sh("flutter", *build_args)
-    end
+def build_flutter_macos_release
+  team = ENV["DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
+  UI.important("DEVELOPMENT_TEAM / FASTLANE_TEAM_ID not set — Xcode must resolve signing.") unless team
 
-    ipa = flutter_ipa_path
-    UI.success("IPA: #{ipa}")
-    ipa
+  Dir.chdir(FLUTTER_ROOT) do
+    sh("flutter", "pub", "get")
+    sh("flutter", "build", "macos", "--release")
+  end
+end
+
+def macos_pkg_path
+  export_dir = File.join(FLUTTER_ROOT, "build/macos/export")
+  pattern = File.join(export_dir, "*.pkg")
+  matches = Dir[pattern]
+  return matches.max_by { |p| File.mtime(p) } if matches.any?
+
+  lane_pkg = Actions.lane_context[SharedValues::PKG_OUTPUT_PATH]
+  return lane_pkg if lane_pkg && File.exist?(lane_pkg)
+
+  UI.user_error!("No macOS .pkg found under #{export_dir}. build_mac_app may have failed.")
+end
+
+def app_store_connect_api_key_from_env
+  key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"]
+  issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"] || ENV["APP_STORE_CONNECT_API_ISSUER_ID"]
+  key_path = ENV["APP_STORE_CONNECT_API_KEY_PATH"] || ENV["APP_STORE_CONNECT_API_KEY_FILEPATH"]
+
+  return nil if [key_id, issuer_id, key_path].any?(&:nil?) || key_path.to_s.empty?
+  unless File.exist?(key_path)
+    UI.user_error!("App Store Connect API key file not found: #{key_path}")
   end
 
-  def app_store_connect_api_key_from_env
-    key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"]
-    issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"] || ENV["APP_STORE_CONNECT_API_ISSUER_ID"]
-    key_path = ENV["APP_STORE_CONNECT_API_KEY_PATH"] || ENV["APP_STORE_CONNECT_API_KEY_FILEPATH"]
+  app_store_connect_api_key(
+    key_id: key_id,
+    issuer_id: issuer_id,
+    key_filepath: key_path,
+    duration: 1200,
+    in_house: false
+  )
+end
 
-    return nil if [key_id, issuer_id, key_path].any?(&:nil?) || key_path.to_s.empty?
-    unless File.exist?(key_path)
-      UI.user_error!("App Store Connect API key file not found: #{key_path}")
-    end
-
-    app_store_connect_api_key(
-      key_id: key_id,
-      issuer_id: issuer_id,
-      key_filepath: key_path,
-      duration: 1200,
-      in_house: false
+def upload_beta_to_testflight(ipa: nil, pkg: nil)
+  api_key = app_store_connect_api_key_from_env
+  unless api_key
+    UI.important(
+      "No App Store Connect API key env vars. " \
+      "Set APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, " \
+      "APP_STORE_CONNECT_API_KEY_PATH — or fastlane may prompt for Apple ID (interactive)."
     )
   end
 
+  upload_params = {
+    skip_waiting_for_build_processing: true,
+    distribute_external: false,
+    uses_non_exempt_encryption: false
+  }
+  upload_params[:ipa] = ipa if ipa
+  upload_params[:pkg] = pkg if pkg
+  upload_params[:api_key] = api_key if api_key
+
+  upload_to_testflight(upload_params)
+end
+
+platform :ios do
   desc "Build release IPA with Flutter (no upload)"
   lane :build do
     build_flutter_ipa
@@ -64,23 +109,44 @@ platform :ios do
   desc "Build IPA and upload to TestFlight"
   lane :beta do
     ipa_path = build_flutter_ipa
+    upload_beta_to_testflight(ipa: ipa_path)
+  end
+end
 
-    api_key = app_store_connect_api_key_from_env
-    unless api_key
-      UI.important(
-        "No App Store Connect API key env vars. " \
-        "Set APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, " \
-        "APP_STORE_CONNECT_API_KEY_PATH — or fastlane may prompt for Apple ID (interactive)."
-      )
-    end
+platform :mac do
+  desc "Build macOS app, package for App Store, upload to TestFlight"
+  lane :beta_mac do
+    build_flutter_macos_release
 
-    upload_params = {
-      ipa: ipa_path,
-      skip_waiting_for_build_processing: true,
-      distribute_external: false
+    workspace = File.join(FLUTTER_ROOT, "macos/Runner.xcworkspace")
+    UI.user_error!("Missing macOS workspace: #{workspace}") unless File.exist?(workspace)
+
+    output_dir = File.join(FLUTTER_ROOT, "build/macos/export")
+    FileUtils.mkdir_p(output_dir)
+
+    team = ENV["DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
+    xcargs = team ? "DEVELOPMENT_TEAM=#{team}" : nil
+
+    export_opts = {
+      method: "app-store-connect"
     }
-    upload_params[:api_key] = api_key if api_key
+    export_opts[:teamID] = team if team
 
-    upload_to_testflight(upload_params)
+    build_mac_app(
+      workspace: workspace,
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      export_team_id: team,
+      export_options: export_opts,
+      output_directory: output_dir,
+      clean: true,
+      xcargs: xcargs,
+      export_xcargs: "-allowProvisioningUpdates"
+    )
+
+    pkg_path = macos_pkg_path
+    UI.success("macOS pkg: #{pkg_path}")
+    upload_beta_to_testflight(pkg: pkg_path)
   end
 end
