@@ -98,12 +98,78 @@ Future<DailyQuestion?> getDailyQuestion(
 Future<DailyQuestion?> getQuestionById(String questionId) async {
   final pools = await loadQuestionPools();
   for (final pick in pools.picks) {
-    if (pick.id == questionId) return pick;
+    if (pick.id == questionId) {
+      return withShuffledChoices(
+        pick,
+        Random(choiceShuffleSeed('review', questionId)),
+      );
+    }
   }
   for (final blank in pools.blanks) {
-    if (blank.id == questionId) return blank;
+    if (blank.id == questionId) {
+      return withShuffledChoices(
+        blank,
+        Random(choiceShuffleSeed('review', questionId)),
+      );
+    }
   }
   return null;
+}
+
+/// 날짜·문항별로 안정적인 선택지 순서 시드.
+@visibleForTesting
+int choiceShuffleSeed(String scope, String questionId) {
+  return Object.hash(scope, questionId);
+}
+
+/// 선택지 순서만 섞고 정답 id/문자열은 유지한다.
+@visibleForTesting
+DailyQuestion withShuffledChoices(DailyQuestion question, Random rng) {
+  if (question is PickQuestion) {
+    return shufflePickChoices(question, rng);
+  }
+  if (question is BlankQuestion) {
+    return shuffleBlankChoices(question, rng);
+  }
+  return question;
+}
+
+@visibleForTesting
+PickQuestion shufflePickChoices(PickQuestion question, Random rng) {
+  final choices = List<DailyChoice>.from(question.choices)..shuffle(rng);
+  return PickQuestion(
+    id: question.id,
+    stem: question.stem,
+    explanation: question.explanation,
+    feedbackCorrect: question.feedbackCorrect,
+    feedbackWrong: question.feedbackWrong,
+    choices: choices,
+    correctChoiceId: question.correctChoiceId,
+    tags: question.tags,
+  );
+}
+
+@visibleForTesting
+BlankQuestion shuffleBlankChoices(BlankQuestion question, Random rng) {
+  final blanks = question.blanks.map((slot) {
+    final choices = List<String>.from(slot.choices)..shuffle(rng);
+    return BlankSlot(
+      id: slot.id,
+      correctAnswers: slot.correctAnswers,
+      choices: choices,
+    );
+  }).toList();
+  return BlankQuestion(
+    id: question.id,
+    stem: question.stem,
+    explanation: question.explanation,
+    feedbackCorrect: question.feedbackCorrect,
+    feedbackWrong: question.feedbackWrong,
+    codeTemplate: question.codeTemplate,
+    blanks: blanks,
+    language: question.language,
+    tags: question.tags,
+  );
 }
 
 Future<QuestionPools> loadQuestionPools() async {
@@ -147,7 +213,9 @@ DailyComposeResult composeDailyPack(
 
   final blanks = _sampleFrom(blankPool, dailyBlankCount, rng);
 
-  final questions = <DailyQuestion>[...picks, ...blanks];
+  final questions = <DailyQuestion>[...picks, ...blanks]
+      .map((q) => withShuffledChoices(q, Random(choiceShuffleSeed(dateKey, q.id))))
+      .toList();
   final packId = 'daily_${dateKey.replaceAll('-', '_')}';
 
   return DailyComposeResult(
@@ -204,20 +272,26 @@ Future<DailyQuestion?> resolveStageQuestion(
     }
   }
   if (q == null) return null;
-  if (q is! BlankQuestion || q.language == lang) return q;
 
-  final substitute = findBlankSubstitute(q, pools.blanks, lang);
-  if (substitute != null) return substitute;
-
-  if (lang != CodeLanguage.defaultId) {
-    final py = findBlankSubstitute(
-      q,
-      pools.blanks,
-      CodeLanguage.defaultId,
-    );
-    if (py != null) return py;
+  DailyQuestion resolved = q;
+  if (q is BlankQuestion && q.language != lang) {
+    final substitute = findBlankSubstitute(q, pools.blanks, lang);
+    if (substitute != null) {
+      resolved = substitute;
+    } else if (lang != CodeLanguage.defaultId) {
+      final py = findBlankSubstitute(
+        q,
+        pools.blanks,
+        CodeLanguage.defaultId,
+      );
+      if (py != null) resolved = py;
+    }
   }
-  return q;
+
+  return withShuffledChoices(
+    resolved,
+    Random(choiceShuffleSeed('stage', resolved.id)),
+  );
 }
 
 List<T> _sampleFrom<T>(List<T> pool, int count, Random rng) {
