@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../data/world1_stages.dart';
 import '../data/world2_stages.dart';
 import '../models/daily_session.dart';
+import '../models/code_language.dart';
 import '../models/guest_progress.dart';
 import '../models/world_stage.dart';
 import 'badge_service.dart';
@@ -388,4 +389,15 @@ class ProgressRepository extends ChangeNotifier {
   @Deprecated('Use completeWorldStage(worldId: 1, ...)')
   GuestProgress completeWorld1Stage(int stageOrder) =>
       completeWorldStage(worldId: 1, stageOrder: stageOrder);
+
+  String get effectiveCodeLanguage =>
+      CodeLanguage.normalize(_progress.preferredCodeLanguage);
+
+  Future<void> setPreferredCodeLanguage(String languageId) async {
+    final normalized = CodeLanguage.normalize(languageId);
+    _progress = _progress.copyWith(preferredCodeLanguage: normalized);
+    resetDailyPackCacheForTest();
+    await _saveProgress();
+    notifyListeners();
+  }
 }

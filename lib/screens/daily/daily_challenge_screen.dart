@@ -31,11 +31,31 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
   DailyQuestion? _question;
   bool _loading = true;
 
+  bool _languageFallbackNotified = false;
+
   @override
   void initState() {
     super.initState();
     _initSession();
+    _ensureDailyPack();
     _loadQuestion();
+  }
+
+  Future<void> _ensureDailyPack() async {
+    final result = await loadDailyPackWithMeta(
+      preferredLanguage: widget.repo.effectiveCodeLanguage,
+    );
+    if (!mounted || _languageFallbackNotified || !result.usedLanguageFallback) {
+      return;
+    }
+    _languageFallbackNotified = true;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          '선택한 언어 문제가 부족해 Python 빈칸으로 진행합니다.',
+        ),
+      ),
+    );
   }
 
   @override
@@ -60,7 +80,10 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
       return;
     }
     setState(() => _loading = true);
-    final q = await getDailyQuestion(step - 1);
+    final q = await getDailyQuestion(
+      step - 1,
+      preferredLanguage: widget.repo.effectiveCodeLanguage,
+    );
     if (mounted) {
       setState(() {
         _question = q;

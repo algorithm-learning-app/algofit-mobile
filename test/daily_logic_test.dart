@@ -107,8 +107,8 @@ void main() {
 
   test('loadQuestionPools는 pick/blank JSON 풀을 로드한다', () async {
     final pools = await loadQuestionPools();
-    expect(pools.picks.length, greaterThanOrEqualTo(50));
-    expect(pools.blanks.length, greaterThanOrEqualTo(30));
+    expect(pools.picks.length, greaterThanOrEqualTo(80));
+    expect(pools.blanks.length, greaterThanOrEqualTo(50));
     expect(pools.picks.every((q) => q.id.startsWith('pick_')), isTrue);
     expect(pools.blanks.every((q) => q.id.startsWith('blank_')), isTrue);
   });
@@ -131,8 +131,8 @@ void main() {
     final pools = await loadQuestionPools();
     const dateKey = '2026-05-18';
 
-    final packA = composeDailyPack(pools, dateKey);
-    final packB = composeDailyPack(pools, dateKey);
+    final packA = composeDailyPack(pools, dateKey).pack;
+    final packB = composeDailyPack(pools, dateKey).pack;
 
     expect(packA.id, 'daily_2026_05_18');
     expect(
@@ -145,5 +145,29 @@ void main() {
   test('seoulDateKey는 UTC 기준 서울 달력일을 반환한다', () {
     final utc = DateTime.utc(2026, 5, 17, 20, 0);
     expect(seoulDateKey(utc), '2026-05-18');
+  });
+
+  test('filterBlanksByLanguage는 선호 언어만 남긴다', () async {
+    final pools = await loadQuestionPools();
+    final javaOnly = filterBlanksByLanguage(pools.blanks, 'java');
+    expect(javaOnly, isNotEmpty);
+    expect(javaOnly.every((q) => q.language == 'java'), isTrue);
+  });
+
+  test('composeDailyPack은 java 풀 부족 시 python fallback', () async {
+    final pools = await loadQuestionPools();
+    const dateKey = '2026-05-20';
+    final result = composeDailyPack(
+      pools,
+      dateKey,
+      preferredLanguage: 'kotlin',
+    );
+    expect(result.usedLanguageFallback, isTrue);
+    expect(
+      result.pack.questions.whereType<BlankQuestion>().every(
+            (q) => q.language == 'python',
+          ),
+      isTrue,
+    );
   });
 }

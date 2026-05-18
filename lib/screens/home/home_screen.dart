@@ -6,18 +6,43 @@ import '../../models/guest_progress.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../widgets/code_language_picker.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.repo});
 
   final ProgressRepository repo;
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _languagePromptShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowLanguagePrompt());
+  }
+
+  Future<void> _maybeShowLanguagePrompt() async {
+    if (_languagePromptShown || !mounted) return;
+    if (!widget.repo.progress.needsCodeLanguagePrompt) return;
+    _languagePromptShown = true;
+    await showCodeLanguageBottomSheet(
+      context,
+      initialId: widget.repo.effectiveCodeLanguage,
+      onConfirm: widget.repo.setPreferredCodeLanguage,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: repo,
+      listenable: widget.repo,
       builder: (context, _) {
-        final progress = repo.progress;
+        final progress = widget.repo.progress;
         return Scaffold(
           body: SafeArea(
             child: Center(
@@ -28,7 +53,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     _HomeHeader(progress: progress),
                     const SizedBox(height: 16),
-                    _DailyCard(repo: repo, progress: progress),
+                    _DailyCard(repo: widget.repo, progress: progress),
                     const SizedBox(height: 16),
                     _BadgesSection(progress: progress),
                     const SizedBox(height: 16),
