@@ -178,13 +178,11 @@ class ProgressRepository extends ChangeNotifier {
       xpEarned: session.xpEarned + xpGain,
       awaitingFeedback: true,
       lastAnswerCorrect: isCorrect,
-      hearts: isCorrect ? session.hearts : (session.hearts - 1).clamp(0, 5),
     );
 
     var nextProgress = addXp(_progress, xpGain);
     nextProgress = nextProgress.copyWith(
       dailyProgress: nextSession.answers.length,
-      hearts: nextSession.hearts,
     );
     if (questionId != null) {
       if (isCorrect) {
