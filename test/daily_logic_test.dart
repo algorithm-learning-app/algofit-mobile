@@ -87,8 +87,8 @@ void main() {
 
   test('loadQuestionPools는 pick/blank JSON 풀을 로드한다', () async {
     final pools = await loadQuestionPools();
-    expect(pools.picks.length, greaterThanOrEqualTo(14));
-    expect(pools.blanks.length, greaterThanOrEqualTo(10));
+    expect(pools.picks.length, greaterThanOrEqualTo(50));
+    expect(pools.blanks.length, greaterThanOrEqualTo(30));
     expect(pools.picks.every((q) => q.id.startsWith('pick_')), isTrue);
     expect(pools.blanks.every((q) => q.id.startsWith('blank_')), isTrue);
   });

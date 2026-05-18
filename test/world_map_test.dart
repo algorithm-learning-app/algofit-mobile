@@ -18,9 +18,11 @@ void main() {
 
   testWidgets('전체 보기에서 World 1 맵으로 이동', (WidgetTester tester) async {
     final repo = await ProgressRepository.create();
+    await tester.binding.setSurfaceSize(const Size(480, 1400));
     await tester.pumpWidget(AlgofitApp(repo: repo));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(find.text('전체 보기'), 200);
     await tester.tap(find.text('전체 보기'));
     await tester.pumpAndSettle();
 

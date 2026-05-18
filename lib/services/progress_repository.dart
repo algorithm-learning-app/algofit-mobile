@@ -9,6 +9,7 @@ import '../data/world2_stages.dart';
 import '../models/daily_session.dart';
 import '../models/guest_progress.dart';
 import '../models/world_stage.dart';
+import 'badge_service.dart';
 import 'daily_service.dart';
 import 'stage_service.dart';
 
@@ -88,6 +89,7 @@ class ProgressRepository extends ChangeNotifier {
     return id;
   }
 
+  /// Hearts MVP: max 5; wrong answers in Level/Algorithm cost 1; new local day refills to 5.
   GuestProgress _resetDailyIfNewDay(GuestProgress p, String today) {
     if (p.lastDailyDate == null || p.lastDailyDate == today) {
       return p;
@@ -98,6 +100,11 @@ class ProgressRepository extends ChangeNotifier {
       dailyProgress: 0,
       hearts: 5,
     );
+  }
+
+  GuestProgress _withBadges(GuestProgress before, GuestProgress after) {
+    final newIds = evaluateNewBadges(before, after);
+    return applyUnlockedBadges(after, newIds);
   }
 
   Future<void> _saveProgress() async {
@@ -165,12 +172,13 @@ class ProgressRepository extends ChangeNotifier {
       }
     }
 
-    _progress = nextProgress;
+    final before = _progress;
+    _progress = _withBadges(before, nextProgress);
     _dailySession = nextSession;
     _saveProgress();
     _saveDailySession(nextSession);
     notifyListeners();
-    return (progress: nextProgress, session: nextSession);
+    return (progress: _progress, session: nextSession);
   }
 
   DailySession advanceAfterFeedback(DailySession session) {
@@ -204,12 +212,13 @@ class ProgressRepository extends ChangeNotifier {
       next = next.copyWith(streakCount: _progress.streakCount + 1);
     }
 
-    _progress = next;
+    final before = _progress;
+    _progress = _withBadges(before, next);
     _dailySession = null;
     _saveProgress();
     _saveDailySession(null);
     notifyListeners();
-    return next;
+    return _progress;
   }
 
   int dailyResumeStep() {
@@ -252,14 +261,15 @@ class ProgressRepository extends ChangeNotifier {
       }
     }
 
+    final before = _progress;
     final next = _progress.copyWith(
       clearedQuestionIds: cleared,
       wrongQuestionIds: wrong,
     );
-    _progress = next;
+    _progress = _withBadges(before, next);
     _saveProgress();
     notifyListeners();
-    return next;
+    return _progress;
   }
 
   GuestProgress completeWorldStage({
@@ -309,10 +319,11 @@ class ProgressRepository extends ChangeNotifier {
       );
     }
 
-    _progress = next;
+    final before = _progress;
+    _progress = _withBadges(before, next);
     _saveProgress();
     notifyListeners();
-    return next;
+    return _progress;
   }
 
   GuestProgress _completeWorld2Stage(int stageOrder, String? questionId) {
@@ -340,10 +351,11 @@ class ProgressRepository extends ChangeNotifier {
         : addXp(_progress, stageXpPerQuestion);
     next = next.copyWith(world2Nodes: updatedNodes);
     next = _withQuestionCleared(next, questionId);
-    _progress = next;
+    final before = _progress;
+    _progress = _withBadges(before, next);
     _saveProgress();
     notifyListeners();
-    return next;
+    return _progress;
   }
 
   @Deprecated('Use completeWorldStage(worldId: 1, ...)')
