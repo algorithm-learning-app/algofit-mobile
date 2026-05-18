@@ -30,3 +30,15 @@ flutter run
 ## 에셋
 
 마스코트 원본: `design/assets/mascot/` — 앱에는 neutral PNG만 번들.
+
+## PR 리뷰 (로컬 봇)
+
+`feat/world-1-map` 등 feature PR은 [algofit-mobile](https://github.com/algorithm-learning-app/algofit-mobile)에서 리뷰합니다. PR 생성 후:
+
+```bash
+export PR_REVIEW_BASE=main
+export PR_REVIEW_CHECK_COMMAND="$(git rev-parse --show-toplevel)/scripts/pr-review-check.sh"
+python3 ~/.codex/skills/gh-review-pr/scripts/review_pr.py --pr-url <NUMBER>
+```
+
+검증만: `./scripts/pr-review-check.sh` (`flutter analyze` · `flutter test`). 상세: [docs/20-pr-review-setup.md](../../docs/20-pr-review-setup.md).
