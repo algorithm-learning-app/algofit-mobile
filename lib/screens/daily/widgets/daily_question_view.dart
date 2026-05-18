@@ -105,20 +105,25 @@ class _DailyQuestionViewState extends State<DailyQuestionView> {
       _blankSelections,
     );
     return [
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.bg,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          code,
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 13,
-            height: 1.5,
-            color: Colors.white,
+      ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 200),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.bg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: SingleChildScrollView(
+            child: SelectableText(
+              code,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 13,
+                height: 1.5,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       ),
