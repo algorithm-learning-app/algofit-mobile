@@ -48,3 +48,11 @@ python3 ~/.codex/skills/gh-review-pr/scripts/review_pr.py --pr-url <NUMBER>
 ```
 
 검증만: `./scripts/pr-review-check.sh` (`flutter analyze` · `flutter test`). 상세: [docs/20-pr-review-setup.md](../../docs/20-pr-review-setup.md).
+
+## TestFlight (iOS 베타)
+
+내부 테스터 배포: Fastlane `beta` 레인. 사전 준비·API 키·명령은 [docs/22-testflight-fastlane.md](../../docs/22-testflight-fastlane.md) 참고.
+
+```bash
+cd ios && bundle install && bundle exec fastlane beta
+```
