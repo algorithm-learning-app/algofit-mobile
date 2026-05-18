@@ -124,7 +124,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                       itemCount: wrongIds.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final id = wrongIds[index];
                         return Card(
