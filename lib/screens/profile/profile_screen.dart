@@ -6,6 +6,7 @@ import '../../data/badges.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../widgets/code_language_picker.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.repo});
@@ -57,6 +58,23 @@ class ProfileScreen extends StatelessWidget {
                     _StatRow(
                       label: '하트',
                       value: '${progress.hearts} / 5',
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '코드 언어',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '빈칸 채우기 문제의 코드 예시 언어입니다.',
+                      style: TextStyle(fontSize: 13, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 12),
+                    CodeLanguagePicker(
+                      selectedId: repo.effectiveCodeLanguage,
+                      onChanged: (id) => repo.setPreferredCodeLanguage(id),
                     ),
                     const SizedBox(height: 20),
                     Text(

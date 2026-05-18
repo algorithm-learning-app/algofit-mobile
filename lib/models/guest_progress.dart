@@ -54,8 +54,9 @@ List<WorldNodeState> defaultWorld2Nodes({bool unlocked = false}) =>
 
 class GuestProgress {
   GuestProgress({
-    this.schemaVersion = 4,
+    this.schemaVersion = 5,
     this.guestId = '',
+    this.preferredCodeLanguage,
     this.level = 1,
     this.xp = 0,
     this.xpToNextLevel = 100,
@@ -76,6 +77,9 @@ class GuestProgress {
     this.unlockedBadgeIds = const [],
   })  : world1Nodes = world1Nodes ?? defaultWorld1Nodes,
         world2Nodes = world2Nodes ?? defaultWorld2NodesLocked;
+
+  /// `null` = 사용자가 아직 선택하지 않음 (첫 실행 안내용).
+  final String? preferredCodeLanguage;
 
   final int schemaVersion;
   final String guestId;
@@ -112,7 +116,11 @@ class GuestProgress {
     return '시작하기';
   }
 
+  bool get needsCodeLanguagePrompt => preferredCodeLanguage == null;
+
   GuestProgress copyWith({
+    String? preferredCodeLanguage,
+    bool clearPreferredCodeLanguage = false,
     String? guestId,
     int? level,
     int? xp,
@@ -132,6 +140,9 @@ class GuestProgress {
   }) {
     return GuestProgress(
       schemaVersion: schemaVersion,
+      preferredCodeLanguage: clearPreferredCodeLanguage
+          ? null
+          : (preferredCodeLanguage ?? this.preferredCodeLanguage),
       guestId: guestId ?? this.guestId,
       level: level ?? this.level,
       xp: xp ?? this.xp,
@@ -157,6 +168,8 @@ class GuestProgress {
 
   Map<String, dynamic> toJson() => {
         'schemaVersion': schemaVersion,
+        if (preferredCodeLanguage != null)
+          'preferredCodeLanguage': preferredCodeLanguage,
         'guestId': guestId,
         'level': level,
         'xp': xp,
@@ -180,7 +193,7 @@ class GuestProgress {
 
   factory GuestProgress.fromJson(Map<String, dynamic> json) {
     final version = json['schemaVersion'] as int? ?? 2;
-    final schema = version < 4 ? 4 : version;
+    final schema = version < 5 ? 5 : version;
     final world1 = _parseWorldNodes(
       json['world1Nodes'],
       fallback: defaultWorld1Nodes,
@@ -189,6 +202,7 @@ class GuestProgress {
         (version >= 3 && world1.where((n) => n == WorldNodeState.cleared).length >= 7);
     return GuestProgress(
       schemaVersion: schema,
+      preferredCodeLanguage: json['preferredCodeLanguage'] as String?,
       guestId: json['guestId'] as String? ?? '',
       level: json['level'] as int? ?? 1,
       xp: json['xp'] as int? ?? 0,

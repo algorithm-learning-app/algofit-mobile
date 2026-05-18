@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:algofit/models/daily_question.dart';
 import 'package:algofit/services/daily_service.dart';
 import 'package:algofit/services/progress_repository.dart';
@@ -10,6 +12,54 @@ void main() {
   setUp(() {
     resetDailyPackCacheForTest();
     SharedPreferences.setMockInitialValues({});
+  });
+
+  test('shufflePickChoices는 correctChoiceId를 유지하고 순서만 바꾼다', () {
+    const q = PickQuestion(
+      id: 'p1',
+      stem: 'stem',
+      explanation: 'e',
+      feedbackCorrect: 'ok',
+      feedbackWrong: 'no',
+      choices: [
+        DailyChoice(id: 'c1', label: 'correct'),
+        DailyChoice(id: 'c2', label: 'wrong-a'),
+        DailyChoice(id: 'c3', label: 'wrong-b'),
+        DailyChoice(id: 'c4', label: 'wrong-c'),
+      ],
+      correctChoiceId: 'c1',
+    );
+    final shuffled = shufflePickChoices(q, Random(42));
+    expect(shuffled.correctChoiceId, 'c1');
+    expect(shuffled.choices.map((c) => c.id).toSet(), {'c1', 'c2', 'c3', 'c4'});
+    expect(checkPickAnswer(shuffled, 'c1'), isTrue);
+    expect(checkPickAnswer(shuffled, 'c2'), isFalse);
+    final correctIndex =
+        shuffled.choices.indexWhere((c) => c.id == shuffled.correctChoiceId);
+    expect(correctIndex, isNot(0));
+  });
+
+  test('composeDailyPack은 셔플 후에도 choice id로 채점한다', () async {
+    final pools = await loadQuestionPools();
+    const dateKey = '2026-05-19';
+    final pack = composeDailyPack(pools, dateKey).pack;
+
+    for (final q in pack.questions) {
+      if (q is! PickQuestion) continue;
+      final correct = q.choices.firstWhere((c) => c.id == q.correctChoiceId);
+      expect(checkPickAnswer(q, correct.id), isTrue);
+      final wrong = q.choices.firstWhere((c) => c.id != q.correctChoiceId);
+      expect(checkPickAnswer(q, wrong.id), isFalse);
+    }
+  });
+
+  test('composeDailyPack은 일부 pick에서 정답이 1번이 아닐 수 있다', () async {
+    final pools = await loadQuestionPools();
+    final pack = composeDailyPack(pools, '2026-05-19').pack;
+    final pickCorrectIndices = pack.questions.whereType<PickQuestion>().map((q) {
+      return q.choices.indexWhere((c) => c.id == q.correctChoiceId);
+    });
+    expect(pickCorrectIndices.any((i) => i != 0), isTrue);
   });
 
   test('checkPickAnswer는 correctChoiceId와 일치 여부를 반환한다', () {
@@ -107,8 +157,8 @@ void main() {
 
   test('loadQuestionPools는 pick/blank JSON 풀을 로드한다', () async {
     final pools = await loadQuestionPools();
-    expect(pools.picks.length, greaterThanOrEqualTo(50));
-    expect(pools.blanks.length, greaterThanOrEqualTo(30));
+    expect(pools.picks.length, greaterThanOrEqualTo(80));
+    expect(pools.blanks.length, greaterThanOrEqualTo(50));
     expect(pools.picks.every((q) => q.id.startsWith('pick_')), isTrue);
     expect(pools.blanks.every((q) => q.id.startsWith('blank_')), isTrue);
   });
@@ -131,8 +181,8 @@ void main() {
     final pools = await loadQuestionPools();
     const dateKey = '2026-05-18';
 
-    final packA = composeDailyPack(pools, dateKey);
-    final packB = composeDailyPack(pools, dateKey);
+    final packA = composeDailyPack(pools, dateKey).pack;
+    final packB = composeDailyPack(pools, dateKey).pack;
 
     expect(packA.id, 'daily_2026_05_18');
     expect(
@@ -145,5 +195,29 @@ void main() {
   test('seoulDateKey는 UTC 기준 서울 달력일을 반환한다', () {
     final utc = DateTime.utc(2026, 5, 17, 20, 0);
     expect(seoulDateKey(utc), '2026-05-18');
+  });
+
+  test('filterBlanksByLanguage는 선호 언어만 남긴다', () async {
+    final pools = await loadQuestionPools();
+    final javaOnly = filterBlanksByLanguage(pools.blanks, 'java');
+    expect(javaOnly, isNotEmpty);
+    expect(javaOnly.every((q) => q.language == 'java'), isTrue);
+  });
+
+  test('composeDailyPack은 java 풀 부족 시 python fallback', () async {
+    final pools = await loadQuestionPools();
+    const dateKey = '2026-05-20';
+    final result = composeDailyPack(
+      pools,
+      dateKey,
+      preferredLanguage: 'kotlin',
+    );
+    expect(result.usedLanguageFallback, isTrue);
+    expect(
+      result.pack.questions.whereType<BlankQuestion>().every(
+            (q) => q.language == 'python',
+          ),
+      isTrue,
+    );
   });
 }

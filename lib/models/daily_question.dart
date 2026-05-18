@@ -107,12 +107,14 @@ class BlankQuestion extends DailyQuestion {
     required super.feedbackWrong,
     required this.codeTemplate,
     required this.blanks,
+    this.language = 'python',
     this.tags = const [],
   });
 
   factory BlankQuestion.fromJson(Map<String, dynamic> json) {
     return BlankQuestion(
       id: json['id'] as String,
+      language: json['language'] as String? ?? 'python',
       stem: json['stem'] as String,
       explanation: json['explanation'] as String,
       feedbackCorrect:
@@ -131,6 +133,7 @@ class BlankQuestion extends DailyQuestion {
 
   final String codeTemplate;
   final List<BlankSlot> blanks;
+  final String language;
   final List<String> tags;
 }
 

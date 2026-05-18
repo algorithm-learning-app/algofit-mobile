@@ -35,6 +35,7 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
   bool _showFeedback = false;
   bool _showComplete = false;
   bool? _lastCorrect;
+  bool _languageFallbackNotified = false;
 
   List<WorldStage> get _mapStages =>
       widget.worldId == 2 ? world2MapStages : world1MapStages;
@@ -70,8 +71,25 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
 
   Future<void> _loadQuestion() async {
     setState(() => _loading = true);
-    final q = await loadStageQuestion(widget.stageId);
+    final lang = widget.repo.effectiveCodeLanguage;
+    final q = await loadStageQuestion(
+      widget.stageId,
+      preferredLanguage: lang,
+    );
     if (mounted) {
+      final blankMismatch = q is BlankQuestion &&
+          q.language != lang &&
+          !_languageFallbackNotified;
+      if (blankMismatch) {
+        _languageFallbackNotified = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '선택한 언어 문제가 없어 Python 빈칸으로 표시합니다.',
+            ),
+          ),
+        );
+      }
       setState(() {
         _question = q;
         _loading = false;
