@@ -1,0 +1,86 @@
+# Fastlane — Flutter IPA build and TestFlight upload for Algofit iOS.
+#
+# Prerequisites: Xcode, Flutter, valid App Store distribution signing.
+# Auth (recommended): APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
+#   APP_STORE_CONNECT_API_KEY_PATH (path to .p8, never commit).
+# Signing: DEVELOPMENT_TEAM or FASTLANE_TEAM_ID for automatic signing.
+#
+# Usage (from apps/mobile/ios):
+#   bundle install
+#   bundle exec fastlane build   # IPA only
+#   bundle exec fastlane beta    # IPA + upload_to_testflight
+
+default_platform(:ios)
+
+platform :ios do
+  FLUTTER_ROOT = File.expand_path("../..", __dir__)
+
+  def flutter_ipa_path
+    pattern = File.join(FLUTTER_ROOT, "build/ios/ipa/*.ipa")
+    matches = Dir[pattern]
+    UI.user_error!("No IPA found at #{pattern}. Run flutter build ipa first.") if matches.empty?
+    matches.max_by { |p| File.mtime(p) }
+  end
+
+  def build_flutter_ipa
+    team = ENV["DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
+    UI.important("DEVELOPMENT_TEAM / FASTLANE_TEAM_ID not set — Xcode must resolve signing.") unless team
+
+    Dir.chdir(FLUTTER_ROOT) do
+      sh("flutter", "pub", "get")
+      build_args = ["build", "ipa", "--release"]
+      sh("flutter", *build_args)
+    end
+
+    ipa = flutter_ipa_path
+    UI.success("IPA: #{ipa}")
+    ipa
+  end
+
+  def app_store_connect_api_key_from_env
+    key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"]
+    issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"] || ENV["APP_STORE_CONNECT_API_ISSUER_ID"]
+    key_path = ENV["APP_STORE_CONNECT_API_KEY_PATH"] || ENV["APP_STORE_CONNECT_API_KEY_FILEPATH"]
+
+    return nil if [key_id, issuer_id, key_path].any?(&:nil?) || key_path.to_s.empty?
+    unless File.exist?(key_path)
+      UI.user_error!("App Store Connect API key file not found: #{key_path}")
+    end
+
+    app_store_connect_api_key(
+      key_id: key_id,
+      issuer_id: issuer_id,
+      key_filepath: key_path,
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  desc "Build release IPA with Flutter (no upload)"
+  lane :build do
+    build_flutter_ipa
+  end
+
+  desc "Build IPA and upload to TestFlight"
+  lane :beta do
+    ipa_path = build_flutter_ipa
+
+    api_key = app_store_connect_api_key_from_env
+    unless api_key
+      UI.important(
+        "No App Store Connect API key env vars. " \
+        "Set APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, " \
+        "APP_STORE_CONNECT_API_KEY_PATH — or fastlane may prompt for Apple ID (interactive)."
+      )
+    end
+
+    upload_params = {
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    }
+    upload_params[:api_key] = api_key if api_key
+
+    upload_to_testflight(upload_params)
+  end
+end
