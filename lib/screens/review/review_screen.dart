@@ -85,10 +85,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                       : q.feedbackWrong,
                                   onContinue: _handleContinue,
                                 )
-                              : DailyQuestionView(
-                                  key: ValueKey(q.id),
-                                  question: q,
-                                  onSubmit: _handleSubmit,
+                              : SingleChildScrollView(
+                                  child: DailyQuestionView(
+                                    key: ValueKey(q.id),
+                                    question: q,
+                                    onSubmit: _handleSubmit,
+                                  ),
                                 ),
                         ),
                       ),

@@ -6,6 +6,7 @@ import '../../models/daily_question.dart';
 import '../../services/algorithm_service.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/hearts_indicator.dart';
 import '../daily/widgets/daily_feedback_view.dart';
 import '../daily/widgets/daily_question_view.dart';
 
@@ -46,7 +47,11 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
 
   void _handleSubmit(bool isCorrect) {
     final q = _pool![_index];
-    widget.repo.recordQuestionOutcome(questionId: q.id, isCorrect: isCorrect);
+    widget.repo.recordQuestionOutcome(
+      questionId: q.id,
+      isCorrect: isCorrect,
+      deductHeartOnWrong: true,
+    );
     setState(() {
       _lastCorrect = isCorrect;
       _showFeedback = true;
@@ -90,9 +95,20 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
             pool: pool,
           );
 
-    return Scaffold(
+    return ListenableBuilder(
+      listenable: widget.repo,
+      builder: (context, _) {
+        return Scaffold(
       appBar: AppBar(
         title: Text('${entry.icon} ${entry.title}'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: HeartsIndicator(hearts: widget.repo.progress.hearts),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: pool == null
@@ -125,10 +141,12 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
                                           : pool[_index].feedbackWrong,
                                       onContinue: _handleContinue,
                                     )
-                                  : DailyQuestionView(
-                                      key: ValueKey(pool[_index].id),
-                                      question: pool[_index],
-                                      onSubmit: _handleSubmit,
+                                  : SingleChildScrollView(
+                                      child: DailyQuestionView(
+                                        key: ValueKey(pool[_index].id),
+                                        question: pool[_index],
+                                        onSubmit: _handleSubmit,
+                                      ),
                                     ),
                             ),
                           ),
@@ -154,6 +172,8 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
                     ),
                   ),
       ),
+    );
+      },
     );
   }
 }

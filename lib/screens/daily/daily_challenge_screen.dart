@@ -7,6 +7,7 @@ import '../../router/app_router.dart';
 import '../../services/daily_service.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/hearts_indicator.dart';
 import 'widgets/daily_feedback_view.dart';
 import 'widgets/daily_question_view.dart';
 
@@ -127,7 +128,11 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
       );
     }
 
-    return Scaffold(
+    return ListenableBuilder(
+      listenable: widget.repo,
+      builder: (context, _) {
+        final hearts = widget.repo.progress.hearts;
+        return Scaffold(
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -138,7 +143,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _DailyTopBar(
-                    hearts: session?.hearts ?? 5,
+                    hearts: hearts,
                     onBack: () => context.go('/home'),
                   ),
                   const SizedBox(height: 16),
@@ -161,6 +166,8 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
           ),
         ),
       ),
+    );
+      },
     );
   }
 
@@ -187,10 +194,12 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
       );
     }
 
-    return DailyQuestionView(
-      key: ValueKey(widget.step),
-      question: _question!,
-      onSubmit: _handleSubmit,
+    return SingleChildScrollView(
+      child: DailyQuestionView(
+        key: ValueKey(widget.step),
+        question: _question!,
+        onSubmit: _handleSubmit,
+      ),
     );
   }
 }
@@ -219,25 +228,7 @@ class _DailyTopBar extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        Semantics(
-          label: '하트 $hearts개',
-          child: Row(
-            children: List.generate(5, (i) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  '❤️',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white.withValues(
-                      alpha: i < hearts ? 1 : 0.35,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
+        HeartsIndicator(hearts: hearts),
       ],
     );
   }

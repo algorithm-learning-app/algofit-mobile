@@ -55,6 +55,25 @@ void main() {
     );
   });
 
+  test('recordQuestionOutcome은 deductHeartOnWrong일 때만 하트를 깎는다', () async {
+    final repo = await ProgressRepository.create();
+    expect(repo.progress.hearts, 5);
+
+    repo.recordQuestionOutcome(
+      questionId: 'pick_test',
+      isCorrect: false,
+      deductHeartOnWrong: true,
+    );
+    expect(repo.progress.hearts, 4);
+
+    repo.recordQuestionOutcome(
+      questionId: 'pick_test2',
+      isCorrect: false,
+      deductHeartOnWrong: false,
+    );
+    expect(repo.progress.hearts, 4);
+  });
+
   test('recordDailyAnswer는 Daily에서 하트를 소모하지 않는다', () async {
     final repo = await ProgressRepository.create();
     var session = repo.startDailySession();

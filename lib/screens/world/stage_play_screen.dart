@@ -9,6 +9,7 @@ import '../../models/world_stage.dart';
 import '../../services/progress_repository.dart';
 import '../../services/stage_service.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/hearts_indicator.dart';
 import '../daily/widgets/daily_feedback_view.dart';
 import '../daily/widgets/daily_question_view.dart';
 
@@ -84,6 +85,7 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
       widget.repo.recordQuestionOutcome(
         questionId: q.id,
         isCorrect: isCorrect,
+        deductHeartOnWrong: true,
       );
     }
     setState(() {
@@ -162,13 +164,24 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
       );
     }
 
-    return Scaffold(
+    return ListenableBuilder(
+      listenable: widget.repo,
+      builder: (context, _) {
+        return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.close_rounded),
         ),
         title: Text(order != null ? '1-$order · $title' : title),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: HeartsIndicator(hearts: widget.repo.progress.hearts),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Center(
@@ -209,6 +222,8 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
           ),
         ),
       ),
+    );
+      },
     );
   }
 

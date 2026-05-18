@@ -268,6 +268,7 @@ class ProgressRepository extends ChangeNotifier {
   GuestProgress recordQuestionOutcome({
     required String questionId,
     required bool isCorrect,
+    bool deductHeartOnWrong = false,
   }) {
     var cleared = List<String>.from(_progress.clearedQuestionIds);
     var wrong = List<String>.from(_progress.wrongQuestionIds);
@@ -283,11 +284,15 @@ class ProgressRepository extends ChangeNotifier {
       }
     }
 
-    final before = _progress;
-    final next = _progress.copyWith(
+    var next = _progress.copyWith(
       clearedQuestionIds: cleared,
       wrongQuestionIds: wrong,
     );
+    if (!isCorrect && deductHeartOnWrong) {
+      next = next.copyWith(hearts: (next.hearts - 1).clamp(0, 5));
+    }
+
+    final before = _progress;
     _progress = _withBadges(before, next);
     _saveProgress();
     notifyListeners();
