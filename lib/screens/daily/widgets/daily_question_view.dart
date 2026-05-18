@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../models/daily_question.dart';
 import '../../../services/daily_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../widgets/blank_choices_section.dart';
+import '../../../widgets/blank_code_view.dart';
 
 class DailyQuestionView extends StatefulWidget {
   const DailyQuestionView({
@@ -100,56 +102,28 @@ class _DailyQuestionViewState extends State<DailyQuestionView> {
   }
 
   List<Widget> _buildBlank(BlankQuestion q) {
-    final code = renderCodeWithSelections(
-      q.codeTemplate,
-      _blankSelections,
-    );
     return [
-      ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 200),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.bg,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: SingleChildScrollView(
-            child: SelectableText(
-              code,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 13,
-                height: 1.5,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
+      BlankCodeView(
+        codeTemplate: q.codeTemplate,
+        selections: _blankSelections,
       ),
       const SizedBox(height: 12),
-      for (final slot in q.blanks) ...[
-        Text(
-          '${slot.id} 빈칸',
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.muted,
-          ),
+      BlankChoicesSection(
+        blanks: q.blanks,
+        selections: _blankSelections,
+        onSelect: (blankId, choice) =>
+            setState(() => _blankSelections[blankId] = choice),
+        choiceBuilder: ({
+          required label,
+          required selected,
+          required onTap,
+        }) =>
+            _ChoiceButton(
+          label: label,
+          selected: selected,
+          onTap: onTap,
         ),
-        const SizedBox(height: 8),
-        for (final choice in slot.choices)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _ChoiceButton(
-              label: choice,
-              selected: _blankSelections[slot.id] == choice,
-              onTap: () =>
-                  setState(() => _blankSelections[slot.id] = choice),
-            ),
-          ),
-        const SizedBox(height: 8),
-      ],
+      ),
     ];
   }
 }
