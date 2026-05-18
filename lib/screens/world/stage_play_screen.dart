@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/stage_questions.dart';
 import '../../data/world1_stages.dart';
 import '../../data/world2_stages.dart';
 import '../../models/daily_question.dart';
@@ -36,6 +37,10 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
   bool _showComplete = false;
   bool? _lastCorrect;
   bool _languageFallbackNotified = false;
+  int _questionIndex = 0;
+  int _correctInSet = 0;
+
+  int get _setSize => stageQuestionCount(widget.stageId);
 
   List<WorldStage> get _mapStages =>
       widget.worldId == 2 ? world2MapStages : world1MapStages;
@@ -74,6 +79,7 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
     final lang = widget.repo.effectiveCodeLanguage;
     final q = await loadStageQuestion(
       widget.stageId,
+      questionIndex: _questionIndex,
       preferredLanguage: lang,
     );
     if (mounted) {
@@ -115,6 +121,17 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
   void _handleFeedbackContinue() {
     if (_lastCorrect != true) {
       setState(() => _showFeedback = false);
+      return;
+    }
+
+    final nextCorrect = _correctInSet + 1;
+    if (nextCorrect < _setSize) {
+      setState(() {
+        _showFeedback = false;
+        _correctInSet = nextCorrect;
+        _questionIndex = nextCorrect;
+      });
+      _loadQuestion();
       return;
     }
 
@@ -186,61 +203,69 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
       listenable: widget.repo,
       builder: (context, _) {
         return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.close_rounded),
-        ),
-        title: Text(order != null ? '1-$order · $title' : title),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Center(
-              child: HeartsIndicator(hearts: widget.repo.progress.hearts),
+          appBar: AppBar(
+            leading: IconButton(
+              onPressed: () => context.pop(),
+              icon: const Icon(Icons.close_rounded),
             ),
+            title: Text(order != null ? '${widget.worldId}-$order · $title' : title),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Center(
+                  child: HeartsIndicator(hearts: widget.repo.progress.hearts),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'World ${widget.worldId} 스테이지',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.muted,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            return SizedBox(
-                              height: constraints.maxHeight,
-                              child: _buildCardContent(),
-                            );
-                          },
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'World ${widget.worldId} 스테이지',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.muted,
                         ),
                       ),
-                    ),
+                      if (_setSize > 0) ...[
+                        const SizedBox(height: 12),
+                        _StageProgressDots(
+                          setSize: _setSize,
+                          step: _questionIndex + 1,
+                          answeredCount: _correctInSet,
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                return SizedBox(
+                                  height: constraints.maxHeight,
+                                  child: _buildCardContent(),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
       },
     );
   }
@@ -259,6 +284,7 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
     if (_showComplete) {
       return _StageCompleteView(
         stageTitle: _stage?.title ?? '스테이지',
+        xpEarned: stageXpPerQuestion * _setSize,
         onMap: () => context.go('/world/${widget.worldId}'),
       );
     }
@@ -277,9 +303,55 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
 
     return SingleChildScrollView(
       child: DailyQuestionView(
-        key: ValueKey(widget.stageId),
+        key: ValueKey('${widget.stageId}_$_questionIndex'),
         question: _question!,
         onSubmit: _handleSubmit,
+      ),
+    );
+  }
+}
+
+class _StageProgressDots extends StatelessWidget {
+  const _StageProgressDots({
+    required this.setSize,
+    required this.step,
+    required this.answeredCount,
+  });
+
+  final int setSize;
+  final int step;
+  final int answeredCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '진행 $step/$setSize',
+      child: Row(
+        children: List.generate(setSize, (i) {
+          final done = i < answeredCount;
+          final current = i == step - 1;
+          return Padding(
+            padding: EdgeInsets.only(right: i < setSize - 1 ? 8 : 0),
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: done || current
+                    ? AppColors.primary
+                    : AppColors.muted.withValues(alpha: 0.35),
+                boxShadow: current
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.35),
+                          spreadRadius: 3,
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -288,10 +360,12 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
 class _StageCompleteView extends StatelessWidget {
   const _StageCompleteView({
     required this.stageTitle,
+    required this.xpEarned,
     required this.onMap,
   });
 
   final String stageTitle;
+  final int xpEarned;
   final VoidCallback onMap;
 
   @override
@@ -318,7 +392,7 @@ class _StageCompleteView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          '+$stageXpPerQuestion XP',
+          '+$xpEarned XP',
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 18,

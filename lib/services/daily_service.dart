@@ -146,6 +146,7 @@ PickQuestion shufflePickChoices(PickQuestion question, Random rng) {
     choices: choices,
     correctChoiceId: question.correctChoiceId,
     tags: question.tags,
+    pickSubtype: question.pickSubtype,
   );
 }
 

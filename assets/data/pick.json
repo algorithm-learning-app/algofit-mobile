@@ -163,6 +163,7 @@
       "type": "pick",
       "version": 1,
       "language": "python",
+      "pickSubtype": "meta",
       "stem": "괄호 `()[]{}`만 들어 있는 문자열이 **올바르게 닫혔는지** 검사합니다. 마지막에 연 괄호를 먼저 닫아야 하므로 어떤 자료구조가 자연스러울까요?",
       "tags": [
         "stack"
@@ -256,6 +257,7 @@
       "type": "pick",
       "version": 1,
       "language": "python",
+      "pickSubtype": "meta",
       "stem": "**오름차순 정렬된** 배열에서 두 수의 합이 target이 되는 서로 다른 두 인덱스를 찾습니다. 가장 먼저 떠오르는 방법은?",
       "tags": [
         "two_pointer"
@@ -318,6 +320,7 @@
       "type": "pick",
       "version": 1,
       "language": "python",
+      "pickSubtype": "meta",
       "stem": "정렬되지 않은 배열에서 target = a[i] + a[j]인 인덱스 한 쌍을 O(n)에 가깝게 찾고 싶습니다. 보조 자료구조로 무엇이 적절할까요?",
       "tags": [
         "hash"
@@ -380,6 +383,7 @@
       "type": "pick",
       "version": 1,
       "language": "python",
+      "pickSubtype": "meta",
       "stem": "이미 오름차순 정렬된 배열 nums에서 값 x의 존재 여부만 빠르게 확인하려 합니다. 가장 적절한 알고리즘은?",
       "tags": [
         "binary_search"
@@ -411,6 +415,7 @@
       "type": "pick",
       "version": 1,
       "language": "python",
+      "pickSubtype": "meta",
       "stem": "2차원 격자에서 시작 칸에서 목표 칸까지의 최소 칸 수(4방향, 벽 #)를 구합니다. 가장 먼저 시도할 탐색은?",
       "tags": [
         "bfs"
@@ -2552,6 +2557,134 @@
       ],
       "correctChoiceId": "c1",
       "explanation": "subset sum 변형은 해시/투 포인터 조합이 흔합니다."
+    },
+    {
+      "id": "pick_stage_tp_001",
+      "type": "pick",
+      "version": 1,
+      "language": "python",
+      "pickSubtype": "application",
+      "stem": "오름차순 nums에서 left=0, right=len(nums)-1로 두 수의 합이 target인 쌍을 찾습니다. 합이 target보다 **작을** 때 갱신할 포인터는?",
+      "tags": [
+        "two_pointer"
+      ],
+      "difficulty": 1,
+      "choices": [
+        {
+          "id": "c1",
+          "label": "left를 1 증가"
+        },
+        {
+          "id": "c2",
+          "label": "right만 1 감소"
+        },
+        {
+          "id": "c3",
+          "label": "left와 right를 동시에 감소"
+        },
+        {
+          "id": "c4",
+          "label": "배열 전체를 다시 정렬"
+        }
+      ],
+      "correctChoiceId": "c1",
+      "explanation": "합이 작으면 더 큰 값이 필요하므로 left를 올립니다. right만 줄이면 합이 더 작아질 수 있습니다."
+    },
+    {
+      "id": "pick_stage_bs_001",
+      "type": "pick",
+      "version": 1,
+      "language": "python",
+      "pickSubtype": "application",
+      "stem": "오름차순 nums에서 l=0, r=n-1, mid=(l+r)//2로 x를 찾습니다. nums[mid] < x일 때 다음에 맞는 갱신은?",
+      "tags": [
+        "binary_search"
+      ],
+      "difficulty": 1,
+      "choices": [
+        {
+          "id": "c1",
+          "label": "l = mid + 1 (오른쪽 절반만 탐색)"
+        },
+        {
+          "id": "c2",
+          "label": "r = mid - 1 (왼쪽 절반만 탐색)"
+        },
+        {
+          "id": "c3",
+          "label": "l과 r을 모두 mid로"
+        },
+        {
+          "id": "c4",
+          "label": "배열을 역순으로 정렬"
+        }
+      ],
+      "correctChoiceId": "c1",
+      "explanation": "중간 값이 x보다 작으면 답은 mid 오른쪽에만 있을 수 있습니다."
+    },
+    {
+      "id": "pick_stage_stack_001",
+      "type": "pick",
+      "version": 1,
+      "language": "python",
+      "pickSubtype": "application",
+      "stem": "괄호 문자열을 왼쪽부터 읽으며, 여는 괄호는 push하고 닫는 괄호가 오면 **가장 최근에 연** 여는 괄호와 짝이 맞는지 볼 때 쓰는 연산은?",
+      "tags": [
+        "stack"
+      ],
+      "difficulty": 1,
+      "choices": [
+        {
+          "id": "c1",
+          "label": "스택 top과 짝이 맞으면 pop, 아니면 실패"
+        },
+        {
+          "id": "c2",
+          "label": "큐 front만 비교"
+        },
+        {
+          "id": "c3",
+          "label": "이분 탐색으로 mid 갱신"
+        },
+        {
+          "id": "c4",
+          "label": "해시로 complement 저장"
+        }
+      ],
+      "correctChoiceId": "c1",
+      "explanation": "LIFO 스택 top이 마지막으로 연 괄호와 짝을 맞춥니다."
+    },
+    {
+      "id": "pick_stage_bfs_001",
+      "type": "pick",
+      "version": 1,
+      "language": "python",
+      "pickSubtype": "application",
+      "stem": "가중치 없는 격자에서 시작에서 목표까지 **최소 칸 수**를 구할 때, 큐에서 꺼낸 칸의 **이웃 4칸**을 처리하는 순서가 중요한 이유는?",
+      "tags": [
+        "bfs"
+      ],
+      "difficulty": 1,
+      "choices": [
+        {
+          "id": "c1",
+          "label": "먼저 큐에 넣은 칸이 더 가까운 거리이므로 최단이 보장됨"
+        },
+        {
+          "id": "c2",
+          "label": "스택 LIFO라서 최단이 보장됨"
+        },
+        {
+          "id": "c3",
+          "label": "정렬 후 이분 탐색해야 최단이 보장됨"
+        },
+        {
+          "id": "c4",
+          "label": "해시만으로 거리가 자동 계산됨"
+        }
+      ],
+      "correctChoiceId": "c1",
+      "explanation": "BFS는 거리(레벨) 순으로 확장하므로 처음 목표에 도달할 때가 최단입니다."
     }
   ]
 }

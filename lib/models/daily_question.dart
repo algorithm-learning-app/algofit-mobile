@@ -1,6 +1,12 @@
 const defaultFeedbackCorrect = '정답이에요!';
 const defaultFeedbackWrong = '아쉬워요. 다시 한번 생각해보세요.';
 
+/// Pick 문항 하위 유형 (`assets/data/pick.json`의 `pickSubtype`).
+/// - `meta`: 상황만 보고 알고리즘 이름·라벨을 고르는 문항 (Daily·패턴 고르기용)
+/// - `application`: 패턴 적용·전술 선택 (World 입문 스테이지용)
+const pickSubtypeMeta = 'meta';
+const pickSubtypeApplication = 'application';
+
 class DailyChoice {
   const DailyChoice({required this.id, required this.label});
 
@@ -72,6 +78,7 @@ class PickQuestion extends DailyQuestion {
     required this.choices,
     required this.correctChoiceId,
     this.tags = const [],
+    this.pickSubtype,
   });
 
   factory PickQuestion.fromJson(Map<String, dynamic> json) {
@@ -90,12 +97,14 @@ class PickQuestion extends DailyQuestion {
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      pickSubtype: json['pickSubtype'] as String?,
     );
   }
 
   final List<DailyChoice> choices;
   final String correctChoiceId;
   final List<String> tags;
+  final String? pickSubtype;
 }
 
 class BlankQuestion extends DailyQuestion {
