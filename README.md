@@ -20,12 +20,18 @@ flutter run
 - Android/iOS: `com.algofit.algofit` (org `com.algofit`, project `algofit`)
 - Material 3, 다크 테마 — 토큰은 `apps/web` 홈과 동일
 
-## 현재 범위
+## MVP 상태 (2026-05-19)
 
-| 포함 | 미포함 |
-|------|--------|
-| 홈 UI (스트릭, XP, Daily 카드, PC 보너스 안내, World 1, 하단 탭) | Daily 5문항 플로우 |
-| 마스코트 에셋 (`assets/images/mascot/`) | 로컬 진행 저장 |
+**Must 완료** — [docs/05-mvp-scope.md](../../docs/05-mvp-scope.md)
+
+| 포함 | 비고 |
+|------|------|
+| Daily 5문항·스트릭·하트 | 서울 날짜 시드 |
+| World 1 (20) · World 2 (10) · Algorithm 6종 · Review | pick/blank 50·30 번들 |
+| 뱃지 8종 · **내 정보** 탭 (guestId, PC 이어하기 링크) | 로컬 `SharedPreferences` |
+| 마스코트 (`assets/images/mascot/`) | |
+
+검증: `./scripts/pr-review-check.sh`
 
 ## 에셋
 
