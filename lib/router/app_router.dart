@@ -5,6 +5,7 @@ import '../screens/algorithm/algorithm_catalog_screen.dart';
 import '../screens/daily/daily_challenge_screen.dart';
 import '../screens/daily/daily_complete_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/profile/profile_screen.dart';
 import '../data/stage_questions.dart';
 import '../screens/review/review_screen.dart';
 import '../screens/world/stage_placeholder_screen.dart';
@@ -20,6 +21,10 @@ GoRouter createAppRouter(ProgressRepository repo) {
       GoRoute(
         path: '/home',
         builder: (context, state) => HomeScreen(repo: repo),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => ProfileScreen(repo: repo),
       ),
       GoRoute(
         path: '/review',

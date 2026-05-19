@@ -16,12 +16,14 @@ class AlgofitBottomNavBar extends StatelessWidget {
     (path: '/world/1', icon: Icons.menu_book_rounded, label: '학습'),
     (path: '/review', icon: Icons.replay_rounded, label: '복습'),
     (path: '/algorithm', icon: Icons.hub_rounded, label: '알고리즘'),
+    (path: '/profile', icon: Icons.person_rounded, label: '내 정보'),
   ];
 
   static int indexForLocation(String location) {
     if (location.startsWith('/world')) return 1;
     if (location.startsWith('/review')) return 2;
     if (location.startsWith('/algorithm')) return 3;
+    if (location.startsWith('/profile')) return 4;
     if (location.startsWith('/home')) return 0;
     return 0;
   }

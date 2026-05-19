@@ -29,10 +29,20 @@ const defaultWorld2NodesLocked = <WorldNodeState>[
   WorldNodeState.locked,
   WorldNodeState.locked,
   WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
 ];
 
 const defaultWorld2NodesUnlocked = <WorldNodeState>[
   WorldNodeState.current,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
+  WorldNodeState.locked,
   WorldNodeState.locked,
   WorldNodeState.locked,
   WorldNodeState.locked,

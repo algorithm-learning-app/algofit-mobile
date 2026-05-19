@@ -61,8 +61,10 @@ class ProgressRepository extends ChangeNotifier {
       }
     }
 
-    _progress = _resetDailyIfNewDay(_progress, today).copyWith(
-      guestId: guestId,
+    _progress = _normalizeWorld2Nodes(
+      _resetDailyIfNewDay(_progress, today).copyWith(
+        guestId: guestId,
+      ),
     );
 
     final sessionRaw = _prefs.getString(_dailySessionKey);
@@ -87,6 +89,28 @@ class ProgressRepository extends ChangeNotifier {
       _prefs.setString(_guestIdKey, id);
     }
     return id;
+  }
+
+  /// Pad or trim world2 node list when map stage count changes.
+  GuestProgress _normalizeWorld2Nodes(GuestProgress p) {
+    final target = world2MapStages.length;
+    var nodes = List<WorldNodeState>.from(p.world2Nodes);
+    if (nodes.length == target) return p;
+
+    if (nodes.length > target) {
+      return p.copyWith(world2Nodes: nodes.sublist(0, target));
+    }
+
+    final oldLen = nodes.length;
+    final allOldCleared = oldLen > 0 &&
+        nodes.every((n) => n == WorldNodeState.cleared);
+    while (nodes.length < target) {
+      nodes.add(WorldNodeState.locked);
+    }
+    if (allOldCleared && oldLen < target) {
+      nodes[oldLen] = WorldNodeState.current;
+    }
+    return p.copyWith(world2Nodes: nodes);
   }
 
   /// Hearts MVP: max 5; wrong answers in Level/Algorithm cost 1; new local day refills to 5.
