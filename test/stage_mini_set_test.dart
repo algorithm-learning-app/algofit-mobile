@@ -1,7 +1,6 @@
 import 'package:algofit/data/stage_questions.dart';
 import 'package:algofit/data/world1_stage_questions.dart';
 import 'package:algofit/data/world1_stages.dart';
-import 'package:algofit/data/world2_stage_questions.dart';
 import 'package:algofit/data/world2_stages.dart';
 import 'package:algofit/models/daily_question.dart';
 import 'package:algofit/services/daily_service.dart';
@@ -16,15 +15,21 @@ void main() {
   group('stage mini-set', () {
     test('every World 1 stage has exactly two questions', () {
       for (final stage in world1MapStages) {
-        expect(stageQuestionCount(stage.id), stageMiniSetSize,
-            reason: stage.id);
+        expect(
+          stageQuestionCount(stage.id),
+          stageMiniSetSize,
+          reason: stage.id,
+        );
       }
     });
 
     test('every World 2 stage has exactly two questions', () {
       for (final stage in world2MapStages) {
-        expect(stageQuestionCount(stage.id), stageMiniSetSize,
-            reason: stage.id);
+        expect(
+          stageQuestionCount(stage.id),
+          stageMiniSetSize,
+          reason: stage.id,
+        );
       }
     });
 
@@ -49,10 +54,13 @@ void main() {
       expect(q1?.id, 'pick_tp_002');
     });
 
-    test('stage-specific pick questions parse with application subtype', () async {
-      final q = await getQuestionById('pick_stage_tp_001');
-      expect(q, isA<PickQuestion>());
-      expect((q as PickQuestion).pickSubtype, 'application');
-    });
+    test(
+      'stage-specific pick questions parse with application subtype',
+      () async {
+        final q = await getQuestionById('pick_stage_tp_001');
+        expect(q, isA<PickQuestion>());
+        expect((q as PickQuestion).pickSubtype, 'application');
+      },
+    );
   });
 }

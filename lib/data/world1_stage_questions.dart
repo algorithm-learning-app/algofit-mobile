@@ -8,14 +8,20 @@
 /// - 스테이지 클리어: 세트 문항 **전부** 정답(오답 시 하트 차감 후 같은 문항 재시도).
 ///
 /// docs/07-curriculum-world-1.md
+enum StageQuestionKind { pick, blank }
+
 class StageQuestionRef {
-  const StageQuestionRef({
-    required this.questionId,
-    required this.kind,
-  });
+  const StageQuestionRef({required this.questionId, required this.kind});
 
   final String questionId;
+
+  /// JSON·레거시 호환 문자열 (`pick` | `blank`).
   final String kind;
+
+  StageQuestionKind get kindEnum =>
+      kind == 'blank' ? StageQuestionKind.blank : StageQuestionKind.pick;
+
+  bool get isBlank => kindEnum == StageQuestionKind.blank;
 }
 
 /// 스테이지 1회 플레이당 문항 수.
