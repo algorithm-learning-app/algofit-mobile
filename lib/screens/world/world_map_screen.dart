@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../data/world1_stages.dart';
-import '../../data/world2_stages.dart';
+import '../../data/world_catalog.dart';
 import '../../models/guest_progress.dart';
 import '../../models/world_stage.dart';
 import '../../services/progress_repository.dart';
@@ -11,18 +10,15 @@ import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/world_map_node.dart';
 
 class WorldMapScreen extends StatelessWidget {
-  const WorldMapScreen({
-    super.key,
-    required this.repo,
-    this.worldId = 1,
-  });
+  const WorldMapScreen({super.key, required this.repo, this.worldId = 1});
 
   final ProgressRepository repo;
   final int worldId;
 
   @override
   Widget build(BuildContext context) {
-    if (worldId != 1 && worldId != 2) {
+    final def = worldById(worldId);
+    if (def == null) {
       return _UnsupportedWorld(worldId: worldId);
     }
 
@@ -30,18 +26,18 @@ class WorldMapScreen extends StatelessWidget {
       listenable: repo,
       builder: (context, _) {
         final progress = repo.progress;
-        final isWorld2 = worldId == 2;
-        if (isWorld2 && !progress.world2Unlocked) {
+        if (!progress.isWorldPlayable(worldId)) {
           return _WorldLocked(repo: repo);
         }
 
-        final stages = isWorld2 ? world2MapStages : world1MapStages;
-        final nodes = isWorld2 ? progress.world2Nodes : progress.world1Nodes;
-        final title = isWorld2 ? world2Title : world1Title;
-        final subtitle = isWorld2 ? world2Subtitle : world1Subtitle;
-        final total = isWorld2 ? world2TotalStages : world1TotalStages;
-        final clearedCount =
-            nodes.where((n) => n == WorldNodeState.cleared).length;
+        final stages = def.stages;
+        final nodes = progress.nodesForWorld(worldId);
+        final title = def.title;
+        final subtitle = def.subtitle;
+        final total = def.totalStages;
+        final clearedCount = nodes
+            .where((n) => n == WorldNodeState.cleared)
+            .length;
 
         return Scaffold(
           body: SafeArea(
@@ -67,34 +63,31 @@ class WorldMapScreen extends StatelessWidget {
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 96),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final stage = stages[index];
-                            final state = worldStageNodeState(
-                              stageOrder: stage.order,
-                              progressNodes: nodes,
-                            );
-                            final alignRight = index.isOdd;
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: index < stages.length - 1 ? 8 : 0,
-                              ),
-                              child: _MapRow(
-                                alignRight: alignRight,
-                                showConnector: index > 0,
-                                child: WorldMapNode(
-                                  order: stage.order,
-                                  title: stage.title,
-                                  state: state,
-                                  onTap: () => context.push(
-                                    '/world/$worldId/stage/${stage.id}',
-                                  ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final stage = stages[index];
+                          final state = worldStageNodeState(
+                            stageOrder: stage.order,
+                            progressNodes: nodes,
+                          );
+                          final alignRight = index.isOdd;
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: index < stages.length - 1 ? 8 : 0,
+                            ),
+                            child: _MapRow(
+                              alignRight: alignRight,
+                              showConnector: index > 0,
+                              child: WorldMapNode(
+                                order: stage.order,
+                                title: stage.title,
+                                state: state,
+                                onTap: () => context.push(
+                                  '/world/$worldId/stage/${stage.id}',
                                 ),
                               ),
-                            );
-                          },
-                          childCount: stages.length,
-                        ),
+                            ),
+                          );
+                        }, childCount: stages.length),
                       ),
                     ),
                   ],
@@ -136,9 +129,8 @@ class _WorldMapHeader extends StatelessWidget {
         Row(
           children: [
             IconButton(
-              onPressed: () => context.canPop()
-                  ? context.pop()
-                  : context.go('/home'),
+              onPressed: () =>
+                  context.canPop() ? context.pop() : context.go('/home'),
               icon: const Icon(Icons.arrow_back_rounded),
               color: AppColors.muted,
               tooltip: '뒤로',
@@ -174,18 +166,16 @@ class _WorldMapHeader extends StatelessWidget {
               label: 'World 2',
               selected: worldId == 2,
               locked: !world2Unlocked,
-              onTap: world2Unlocked
-                  ? () => context.go('/world/2')
-                  : null,
+              onTap: world2Unlocked ? () => context.go('/world/2') : null,
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
           title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(

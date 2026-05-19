@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/stage_questions.dart';
-import '../../data/world1_stages.dart';
-import '../../data/world2_stages.dart';
+import '../../data/world_catalog.dart';
 import '../../models/daily_question.dart';
 import '../../models/guest_progress.dart';
 import '../../models/world_stage.dart';
@@ -42,12 +41,12 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
 
   int get _setSize => stageQuestionCount(widget.stageId);
 
-  List<WorldStage> get _mapStages =>
-      widget.worldId == 2 ? world2MapStages : world1MapStages;
+  WorldDefinition? get _worldDef => worldById(widget.worldId);
 
-  List<WorldNodeState> get _progressNodes => widget.worldId == 2
-      ? widget.repo.progress.world2Nodes
-      : widget.repo.progress.world1Nodes;
+  List<WorldStage> get _mapStages => _worldDef?.stages ?? const [];
+
+  List<WorldNodeState> get _progressNodes =>
+      widget.repo.progress.nodesForWorld(widget.worldId);
 
   WorldStage? get _stage {
     for (final stage in _mapStages) {
@@ -59,7 +58,7 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
   WorldNodeState get _nodeState {
     final stage = _stage;
     if (stage == null) return WorldNodeState.locked;
-    if (widget.worldId == 2 && !widget.repo.progress.world2Unlocked) {
+    if (!widget.repo.progress.isWorldPlayable(widget.worldId)) {
       return WorldNodeState.locked;
     }
     return worldStageNodeState(
@@ -83,17 +82,14 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
       preferredLanguage: lang,
     );
     if (mounted) {
-      final blankMismatch = q is BlankQuestion &&
+      final blankMismatch =
+          q is BlankQuestion &&
           q.language != lang &&
           !_languageFallbackNotified;
       if (blankMismatch) {
         _languageFallbackNotified = true;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '선택한 언어 문제가 없어 Python 빈칸으로 표시합니다.',
-            ),
-          ),
+          const SnackBar(content: Text('선택한 언어 문제가 없어 Python 빈칸으로 표시합니다.')),
         );
       }
       setState(() {
@@ -178,8 +174,8 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
                 Text(
                   '아직 잠긴 스테이지예요',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -208,7 +204,9 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
               onPressed: () => context.pop(),
               icon: const Icon(Icons.close_rounded),
             ),
-            title: Text(order != null ? '${widget.worldId}-$order · $title' : title),
+            title: Text(
+              order != null ? '${widget.worldId}-$order · $title' : title,
+            ),
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 12),
@@ -297,6 +295,7 @@ class _StagePlayScreenState extends State<StagePlayScreen> {
       return DailyFeedbackView(
         isCorrect: isCorrect,
         message: message,
+        explanation: _question!.explanation,
         onContinue: _handleFeedbackContinue,
       );
     }
@@ -373,7 +372,11 @@ class _StageCompleteView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('🎉', textAlign: TextAlign.center, style: TextStyle(fontSize: 48)),
+        const Text(
+          '🎉',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 48),
+        ),
         const SizedBox(height: 8),
         const Text(
           '스테이지 클리어!',
@@ -401,10 +404,7 @@ class _StageCompleteView extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        FilledButton(
-          onPressed: onMap,
-          child: const Text('맵으로 돌아가기'),
-        ),
+        FilledButton(onPressed: onMap, child: const Text('맵으로 돌아가기')),
       ],
     );
   }
