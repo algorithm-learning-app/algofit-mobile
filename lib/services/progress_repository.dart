@@ -1,171 +1,59 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
-import '../data/world1_stages.dart';
-import '../data/world2_stages.dart';
-import '../models/daily_session.dart';
+import '../config/pc_handoff.dart';
 import '../models/code_language.dart';
+import '../models/daily_session.dart';
 import '../models/guest_progress.dart';
-import '../models/world_stage.dart';
-import 'badge_service.dart';
-import 'daily_service.dart';
-import 'stage_service.dart';
+import '../services/daily_service.dart';
+import '../services/question_pool_cache.dart';
+import 'progress/daily_session_store.dart';
+import 'progress/guest_progress_store.dart';
+import 'progress/progress_math.dart';
+import 'progress/progress_persist.dart';
+import 'progress/world_progress_service.dart';
 
-const world2UnlockClearedCount = 7;
-
-const _progressKey = 'algofit:guestProgress';
-const _guestIdKey = 'algofit:guestId';
-const _dailySessionKey = 'algofit:dailySession';
-
-String getTodaySeoul() {
-  final now = DateTime.now().toUtc().add(const Duration(hours: 9));
-  final y = now.year.toString().padLeft(4, '0');
-  final m = now.month.toString().padLeft(2, '0');
-  final d = now.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}
+export 'progress/guest_progress_store.dart' show getTodaySeoul;
+export '../data/world_catalog.dart' show world2UnlockClearedCount;
 
 class ProgressRepository extends ChangeNotifier {
-  ProgressRepository(this._prefs);
+  ProgressRepository._(
+    this._persist, {
+    WorldProgressService? worldProgress,
+  }) : _worldProgress = worldProgress ?? const WorldProgressService();
 
-  final SharedPreferences _prefs;
-  GuestProgress _progress = GuestProgress();
-  DailySession? _dailySession;
+  final ProgressPersistCoordinator _persist;
+  final WorldProgressService _worldProgress;
 
-  GuestProgress get progress => _progress;
-  DailySession? get dailySession => _dailySession;
+  GuestProgressStore get _progressStore => _persist.progressStore;
+  DailySessionStore get _sessionStore => _persist.sessionStore;
+
+  GuestProgress get progress => _progressStore.value;
+  DailySession? get dailySession => _sessionStore.value;
 
   static Future<ProgressRepository> create() async {
     final prefs = await SharedPreferences.getInstance();
-    final repo = ProgressRepository(prefs);
+    final persist = ProgressPersistCoordinator(prefs);
+    final repo = ProgressRepository._(persist);
     await repo._load();
     return repo;
   }
 
   Future<void> _load() async {
-    final guestId = _ensureGuestId();
-    final today = getTodaySeoul();
-    final raw = _prefs.getString(_progressKey);
-
-    if (raw == null) {
-      _progress = GuestProgress(guestId: guestId);
-    } else {
-      try {
-        _progress = GuestProgress.fromJson(
-          jsonDecode(raw) as Map<String, dynamic>,
-        );
-      } catch (_) {
-        _progress = GuestProgress(guestId: guestId);
-      }
-    }
-
-    _progress = _normalizeWorld2Nodes(
-      _resetDailyIfNewDay(_progress, today).copyWith(
-        guestId: guestId,
-      ),
-    );
-
-    final sessionRaw = _prefs.getString(_dailySessionKey);
-    if (sessionRaw != null) {
-      try {
-        _dailySession = DailySession.fromJson(
-          jsonDecode(sessionRaw) as Map<String, dynamic>,
-        );
-      } catch (_) {
-        _dailySession = null;
-      }
-    }
-
-    await _saveProgress();
+    await _progressStore.loadAndNormalize();
+    _sessionStore.loadFromDisk();
     notifyListeners();
   }
 
-  String _ensureGuestId() {
-    var id = _prefs.getString(_guestIdKey);
-    if (id == null || id.isEmpty) {
-      id = const Uuid().v4();
-      _prefs.setString(_guestIdKey, id);
-    }
-    return id;
-  }
-
-  /// Pad or trim world2 node list when map stage count changes.
-  GuestProgress _normalizeWorld2Nodes(GuestProgress p) {
-    final target = world2MapStages.length;
-    var nodes = List<WorldNodeState>.from(p.world2Nodes);
-    if (nodes.length == target) return p;
-
-    if (nodes.length > target) {
-      return p.copyWith(world2Nodes: nodes.sublist(0, target));
-    }
-
-    final oldLen = nodes.length;
-    final allOldCleared = oldLen > 0 &&
-        nodes.every((n) => n == WorldNodeState.cleared);
-    while (nodes.length < target) {
-      nodes.add(WorldNodeState.locked);
-    }
-    if (allOldCleared && oldLen < target) {
-      nodes[oldLen] = WorldNodeState.current;
-    }
-    return p.copyWith(world2Nodes: nodes);
-  }
-
-  /// Hearts MVP: max 5; wrong answers in Level/Algorithm cost 1; new local day refills to 5.
-  GuestProgress _resetDailyIfNewDay(GuestProgress p, String today) {
-    if (p.lastDailyDate == null || p.lastDailyDate == today) {
-      return p;
-    }
-    return p.copyWith(
-      todayDailyCompleted: false,
-      todayAllCorrect: false,
-      dailyProgress: 0,
-      hearts: 5,
-    );
-  }
-
-  GuestProgress _withBadges(GuestProgress before, GuestProgress after) {
-    final newIds = evaluateNewBadges(before, after);
-    return applyUnlockedBadges(after, newIds);
-  }
-
-  Future<void> _saveProgress() async {
-    await _prefs.setString(_progressKey, jsonEncode(_progress.toJson()));
-  }
-
-  Future<void> _saveDailySession(DailySession? session) async {
-    if (session == null) {
-      await _prefs.remove(_dailySessionKey);
-      _dailySession = null;
-      return;
-    }
-    await _prefs.setString(_dailySessionKey, jsonEncode(session.toJson()));
-    _dailySession = session;
-  }
+  @visibleForTesting
+  Future<void> flushPersist() => _persist.flush();
 
   DailySession startDailySession() {
     final session = DailySession.initial();
-    _dailySession = session;
-    _saveDailySession(session);
+    _sessionStore.value = session;
+    _persist.schedule(dailySession: session);
     notifyListeners();
     return session;
-  }
-
-  GuestProgress addXp(GuestProgress p, int amount) {
-    var xp = p.xp + amount;
-    var level = p.level;
-    var xpToNext = p.xpToNextLevel;
-
-    while (xp >= xpToNext) {
-      xp -= xpToNext;
-      level += 1;
-      xpToNext = (xpToNext * 1.25).round();
-    }
-
-    return p.copyWith(xp: xp, level: level, xpToNextLevel: xpToNext);
   }
 
   ({GuestProgress progress, DailySession session}) recordDailyAnswer(
@@ -181,13 +69,13 @@ class ProgressRepository extends ChangeNotifier {
       lastAnswerCorrect: isCorrect,
     );
 
-    var nextProgress = addXp(_progress, xpGain);
+    var nextProgress = addXp(_progressStore.value, xpGain);
     nextProgress = nextProgress.copyWith(
       dailyProgress: nextSession.answers.length,
     );
     if (questionId != null) {
       if (isCorrect) {
-        nextProgress = _withQuestionCleared(nextProgress, questionId);
+        nextProgress = withQuestionCleared(nextProgress, questionId);
       } else {
         final wrong = List<String>.from(nextProgress.wrongQuestionIds);
         if (!wrong.contains(questionId)) wrong.add(questionId);
@@ -195,13 +83,12 @@ class ProgressRepository extends ChangeNotifier {
       }
     }
 
-    final before = _progress;
-    _progress = _withBadges(before, nextProgress);
-    _dailySession = nextSession;
-    _saveProgress();
-    _saveDailySession(nextSession);
+    final before = _progressStore.value;
+    _progressStore.value = withBadges(before, nextProgress);
+    _sessionStore.value = nextSession;
+    _persist.schedule(saveProgress: true, dailySession: nextSession);
     notifyListeners();
-    return (progress: _progress, session: nextSession);
+    return (progress: _progressStore.value, session: nextSession);
   }
 
   DailySession advanceAfterFeedback(DailySession session) {
@@ -210,18 +97,18 @@ class ProgressRepository extends ChangeNotifier {
       awaitingFeedback: false,
       clearLastAnswerCorrect: true,
     );
-    _dailySession = next;
-    _saveDailySession(next);
+    _sessionStore.value = next;
+    _persist.schedule(dailySession: next);
     notifyListeners();
     return next;
   }
 
   GuestProgress completeDailyChallenge(DailySession session) {
     final today = getTodaySeoul();
-    final allCorrect = session.answers.length == dailyTotal &&
-        session.answers.every((a) => a);
+    final allCorrect =
+        session.answers.length == dailyTotal && session.answers.every((a) => a);
 
-    var next = _progress.copyWith(
+    var next = _progressStore.value.copyWith(
       todayDailyCompleted: true,
       todayAllCorrect: allCorrect,
       dailyProgress: dailyTotal,
@@ -229,23 +116,23 @@ class ProgressRepository extends ChangeNotifier {
     );
 
     final alreadyStreakedToday =
-        _progress.lastDailyDate == today && _progress.todayAllCorrect;
+        _progressStore.value.lastDailyDate == today &&
+        _progressStore.value.todayAllCorrect;
 
     if (allCorrect && !alreadyStreakedToday) {
-      next = next.copyWith(streakCount: _progress.streakCount + 1);
+      next = next.copyWith(streakCount: _progressStore.value.streakCount + 1);
     }
 
-    final before = _progress;
-    _progress = _withBadges(before, next);
-    _dailySession = null;
-    _saveProgress();
-    _saveDailySession(null);
+    final before = _progressStore.value;
+    _progressStore.value = withBadges(before, next);
+    _sessionStore.value = null;
+    _persist.schedule(saveProgress: true, clearDailySession: true);
     notifyListeners();
-    return _progress;
+    return _progressStore.value;
   }
 
   int dailyResumeStep() {
-    final session = _dailySession;
+    final session = _sessionStore.value;
     if (session == null) return 1;
     if (session.awaitingFeedback) {
       return session.questionIndex + 1;
@@ -253,26 +140,13 @@ class ProgressRepository extends ChangeNotifier {
     return (session.questionIndex + 1).clamp(1, dailyTotal);
   }
 
-  GuestProgress _withQuestionCleared(GuestProgress base, String? questionId) {
-    if (questionId == null) return base;
-    final cleared = List<String>.from(base.clearedQuestionIds);
-    if (!cleared.contains(questionId)) {
-      cleared.add(questionId);
-    }
-    final wrong = List<String>.from(base.wrongQuestionIds)..remove(questionId);
-    return base.copyWith(
-      clearedQuestionIds: cleared,
-      wrongQuestionIds: wrong,
-    );
-  }
-
   GuestProgress recordQuestionOutcome({
     required String questionId,
     required bool isCorrect,
     bool deductHeartOnWrong = false,
   }) {
-    var cleared = List<String>.from(_progress.clearedQuestionIds);
-    var wrong = List<String>.from(_progress.wrongQuestionIds);
+    var cleared = List<String>.from(_progressStore.value.clearedQuestionIds);
+    var wrong = List<String>.from(_progressStore.value.wrongQuestionIds);
 
     if (isCorrect) {
       if (!cleared.contains(questionId)) {
@@ -285,7 +159,7 @@ class ProgressRepository extends ChangeNotifier {
       }
     }
 
-    var next = _progress.copyWith(
+    var next = _progressStore.value.copyWith(
       clearedQuestionIds: cleared,
       wrongQuestionIds: wrong,
     );
@@ -293,11 +167,11 @@ class ProgressRepository extends ChangeNotifier {
       next = next.copyWith(hearts: (next.hearts - 1).clamp(0, 5));
     }
 
-    final before = _progress;
-    _progress = _withBadges(before, next);
-    _saveProgress();
+    final before = _progressStore.value;
+    _progressStore.value = withBadges(before, next);
+    _persist.schedule(saveProgress: true);
     notifyListeners();
-    return _progress;
+    return _progressStore.value;
   }
 
   GuestProgress completeWorldStage({
@@ -305,85 +179,16 @@ class ProgressRepository extends ChangeNotifier {
     required int stageOrder,
     String? questionId,
   }) {
-    if (worldId == 1) {
-      return _completeWorld1Stage(stageOrder, questionId);
-    }
-    if (worldId == 2) {
-      return _completeWorld2Stage(stageOrder, questionId);
-    }
-    return _progress;
-  }
-
-  GuestProgress _completeWorld1Stage(int stageOrder, String? questionId) {
-    var nodes = List<WorldNodeState>.from(_progress.world1Nodes);
-    while (nodes.length < world1MapStages.length) {
-      nodes.add(WorldNodeState.locked);
-    }
-
-    final idx = stageOrder - 1;
-    final alreadyCleared =
-        idx >= 0 && idx < nodes.length && nodes[idx] == WorldNodeState.cleared;
-
-    final updatedNodes = alreadyCleared
-        ? nodes
-        : advanceWorldNodesAfterClear(
-            nodes: nodes,
-            clearedStageOrder: stageOrder,
-            mapStageCount: world1MapStages.length,
-          );
-
-    var next = alreadyCleared
-        ? _progress
-        : addXp(_progress, stageXpPerQuestion);
-    next = next.copyWith(world1Nodes: updatedNodes);
-    next = _withQuestionCleared(next, questionId);
-
-    final clearedCount =
-        updatedNodes.where((n) => n == WorldNodeState.cleared).length;
-    if (clearedCount >= world2UnlockClearedCount && !next.world2Unlocked) {
-      next = next.copyWith(
-        world2Unlocked: true,
-        world2Nodes: defaultWorld2Nodes(unlocked: true),
-      );
-    }
-
-    final before = _progress;
-    _progress = _withBadges(before, next);
-    _saveProgress();
+    final before = _progressStore.value;
+    _progressStore.value = _worldProgress.completeStage(
+      progress: before,
+      worldId: worldId,
+      stageOrder: stageOrder,
+      questionId: questionId,
+    );
+    _persist.schedule(saveProgress: true);
     notifyListeners();
-    return _progress;
-  }
-
-  GuestProgress _completeWorld2Stage(int stageOrder, String? questionId) {
-    if (!_progress.world2Unlocked) return _progress;
-
-    var nodes = List<WorldNodeState>.from(_progress.world2Nodes);
-    while (nodes.length < world2MapStages.length) {
-      nodes.add(WorldNodeState.locked);
-    }
-
-    final idx = stageOrder - 1;
-    final alreadyCleared =
-        idx >= 0 && idx < nodes.length && nodes[idx] == WorldNodeState.cleared;
-
-    final updatedNodes = alreadyCleared
-        ? nodes
-        : advanceWorldNodesAfterClear(
-            nodes: nodes,
-            clearedStageOrder: stageOrder,
-            mapStageCount: world2MapStages.length,
-          );
-
-    var next = alreadyCleared
-        ? _progress
-        : addXp(_progress, stageXpPerQuestion);
-    next = next.copyWith(world2Nodes: updatedNodes);
-    next = _withQuestionCleared(next, questionId);
-    final before = _progress;
-    _progress = _withBadges(before, next);
-    _saveProgress();
-    notifyListeners();
-    return _progress;
+    return _progressStore.value;
   }
 
   @Deprecated('Use completeWorldStage(worldId: 1, ...)')
@@ -391,13 +196,19 @@ class ProgressRepository extends ChangeNotifier {
       completeWorldStage(worldId: 1, stageOrder: stageOrder);
 
   String get effectiveCodeLanguage =>
-      CodeLanguage.normalize(_progress.preferredCodeLanguage);
+      CodeLanguage.normalize(_progressStore.value.preferredCodeLanguage);
 
   Future<void> setPreferredCodeLanguage(String languageId) async {
     final normalized = CodeLanguage.normalize(languageId);
-    _progress = _progress.copyWith(preferredCodeLanguage: normalized);
-    resetDailyPackCacheForTest();
-    await _saveProgress();
+    _progressStore.value =
+        _progressStore.value.copyWith(preferredCodeLanguage: normalized);
+    QuestionPoolCache.instance.invalidateDailyPack();
+    await _progressStore.persist();
     notifyListeners();
+  }
+
+  /// PC 웹 이어하기 URL (단기 handoff 토큰, guestId 직접 노출 없음).
+  String createPcContinueUrl() {
+    return pcContinueUrl(createHandoffToken(_progressStore.value.guestId));
   }
 }

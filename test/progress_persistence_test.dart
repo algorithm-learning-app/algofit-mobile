@@ -19,6 +19,7 @@ void main() {
       }
     }
     repo1.completeDailyChallenge(session);
+    await repo1.flushPersist();
 
     final savedXp = repo1.progress.xp;
     final savedStreak = repo1.progress.streakCount;
