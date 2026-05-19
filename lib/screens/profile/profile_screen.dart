@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../config/pc_handoff.dart';
 import '../../data/badges.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
@@ -20,7 +19,7 @@ class ProfileScreen extends StatelessWidget {
       builder: (context, _) {
         final progress = repo.progress;
         final unlocked = progress.unlockedBadgeIds.toSet();
-        final continueUrl = pcContinueUrl(progress.guestId);
+        final continueUrl = repo.createPcContinueUrl();
 
         return Scaffold(
           body: SafeArea(
@@ -32,9 +31,8 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Text(
                       '내 정보',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 16),
                     _StatRow(
@@ -44,10 +42,7 @@ class ProfileScreen extends StatelessWidget {
                       onCopy: () => _copy(context, progress.guestId, '게스트 ID'),
                     ),
                     const SizedBox(height: 12),
-                    _StatRow(
-                      label: '스트릭',
-                      value: '${progress.streakCount}일',
-                    ),
+                    _StatRow(label: '스트릭', value: '${progress.streakCount}일'),
                     const SizedBox(height: 12),
                     _StatRow(
                       label: '레벨 · XP',
@@ -55,16 +50,13 @@ class ProfileScreen extends StatelessWidget {
                           'Lv.${progress.level} · ${progress.xp} / ${progress.xpToNextLevel} XP',
                     ),
                     const SizedBox(height: 12),
-                    _StatRow(
-                      label: '하트',
-                      value: '${progress.hearts} / 5',
-                    ),
+                    _StatRow(label: '하트', value: '${progress.hearts} / 5'),
                     const SizedBox(height: 20),
                     Text(
                       '코드 언어',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -80,8 +72,8 @@ class ProfileScreen extends StatelessWidget {
                     Text(
                       '뱃지 ${unlocked.length} / ${kBadges.length}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -109,8 +101,9 @@ class ProfileScreen extends StatelessWidget {
                               child: Text(
                                 unlocked.contains(badge.id) ? badge.emoji : '○',
                                 style: TextStyle(
-                                  fontSize:
-                                      unlocked.contains(badge.id) ? 22 : 16,
+                                  fontSize: unlocked.contains(badge.id)
+                                      ? 22
+                                      : 16,
                                   color: unlocked.contains(badge.id)
                                       ? null
                                       : AppColors.muted,
@@ -129,9 +122,7 @@ class ProfileScreen extends StatelessWidget {
                           children: [
                             Text(
                               'PC에서 이어하기',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
+                              style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 8),
@@ -153,11 +144,8 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             FilledButton.icon(
-                              onPressed: () => _copy(
-                                context,
-                                continueUrl,
-                                'PC 이어하기 링크',
-                              ),
+                              onPressed: () =>
+                                  _copy(context, continueUrl, 'PC 이어하기 링크'),
                               icon: const Icon(Icons.link_rounded, size: 18),
                               label: const Text('링크 복사'),
                             ),
@@ -183,9 +171,9 @@ class ProfileScreen extends StatelessWidget {
   ) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label 복사됨')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$label 복사됨')));
   }
 }
 
