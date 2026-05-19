@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/badges.dart';
 import '../../models/guest_progress.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
@@ -28,6 +29,8 @@ class HomeScreen extends StatelessWidget {
                     _HomeHeader(progress: progress),
                     const SizedBox(height: 16),
                     _DailyCard(repo: repo, progress: progress),
+                    const SizedBox(height: 16),
+                    _BadgesSection(progress: progress),
                     const SizedBox(height: 16),
                     const _PcBonusCard(),
                     const SizedBox(height: 16),
@@ -243,6 +246,80 @@ class _DailyCard extends StatelessWidget {
             FilledButton(
               onPressed: () => _onDailyTap(context),
               child: Text(progress.dailyCtaLabel),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BadgesSection extends StatelessWidget {
+  const _BadgesSection({required this.progress});
+
+  final GuestProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final unlocked = progress.unlockedBadgeIds.toSet();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '뱃지',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${unlocked.length} / ${kBadges.length} 획득',
+              style: const TextStyle(fontSize: 13, color: AppColors.muted),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final badge in kBadges)
+                  Semantics(
+                    label: unlocked.contains(badge.id)
+                        ? '${badge.title} 획득'
+                        : '${badge.title} 미획득',
+                    child: Tooltip(
+                      message: badge.description,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: unlocked.contains(badge.id)
+                              ? AppColors.primary.withValues(alpha: 0.15)
+                              : AppColors.muted.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: unlocked.contains(badge.id)
+                                ? AppColors.primary.withValues(alpha: 0.4)
+                                : AppColors.muted.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Text(
+                          unlocked.contains(badge.id) ? badge.emoji : '○',
+                          style: TextStyle(
+                            fontSize: unlocked.contains(badge.id) ? 22 : 16,
+                            color: unlocked.contains(badge.id)
+                                ? null
+                                : AppColors.muted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
