@@ -75,8 +75,8 @@ class GuestProgress {
     this.clearedQuestionIds = const [],
     this.wrongQuestionIds = const [],
     this.unlockedBadgeIds = const [],
-  })  : world1Nodes = world1Nodes ?? defaultWorld1Nodes,
-        world2Nodes = world2Nodes ?? defaultWorld2NodesLocked;
+  }) : world1Nodes = world1Nodes ?? defaultWorld1Nodes,
+       world2Nodes = world2Nodes ?? defaultWorld2NodesLocked;
 
   /// `null` = 사용자가 아직 선택하지 않음 (첫 실행 안내용).
   final String? preferredCodeLanguage;
@@ -149,8 +149,7 @@ class GuestProgress {
       xpToNextLevel: xpToNextLevel ?? this.xpToNextLevel,
       streakCount: streakCount ?? this.streakCount,
       lastDailyDate: lastDailyDate ?? this.lastDailyDate,
-      todayDailyCompleted:
-          todayDailyCompleted ?? this.todayDailyCompleted,
+      todayDailyCompleted: todayDailyCompleted ?? this.todayDailyCompleted,
       todayAllCorrect: todayAllCorrect ?? this.todayAllCorrect,
       dailyProgress: dailyProgress ?? this.dailyProgress,
       dailyTotal: dailyTotal,
@@ -167,29 +166,29 @@ class GuestProgress {
   }
 
   Map<String, dynamic> toJson() => {
-        'schemaVersion': schemaVersion,
-        if (preferredCodeLanguage != null)
-          'preferredCodeLanguage': preferredCodeLanguage,
-        'guestId': guestId,
-        'level': level,
-        'xp': xp,
-        'xpToNextLevel': xpToNextLevel,
-        'streakCount': streakCount,
-        'lastDailyDate': lastDailyDate,
-        'todayDailyCompleted': todayDailyCompleted,
-        'todayAllCorrect': todayAllCorrect,
-        'dailyProgress': dailyProgress,
-        'dailyTotal': dailyTotal,
-        'dailyPickCount': dailyPickCount,
-        'dailyBlankCount': dailyBlankCount,
-        'hearts': hearts,
-        'world1Nodes': world1Nodes.map(_worldNodeToString).toList(),
-        'world2Nodes': world2Nodes.map(_worldNodeToString).toList(),
-        'world2Unlocked': world2Unlocked,
-        'clearedQuestionIds': clearedQuestionIds,
-        'wrongQuestionIds': wrongQuestionIds,
-        'unlockedBadgeIds': unlockedBadgeIds,
-      };
+    'schemaVersion': schemaVersion,
+    if (preferredCodeLanguage != null)
+      'preferredCodeLanguage': preferredCodeLanguage,
+    'guestId': guestId,
+    'level': level,
+    'xp': xp,
+    'xpToNextLevel': xpToNextLevel,
+    'streakCount': streakCount,
+    'lastDailyDate': lastDailyDate,
+    'todayDailyCompleted': todayDailyCompleted,
+    'todayAllCorrect': todayAllCorrect,
+    'dailyProgress': dailyProgress,
+    'dailyTotal': dailyTotal,
+    'dailyPickCount': dailyPickCount,
+    'dailyBlankCount': dailyBlankCount,
+    'hearts': hearts,
+    'world1Nodes': world1Nodes.map(_worldNodeToString).toList(),
+    'world2Nodes': world2Nodes.map(_worldNodeToString).toList(),
+    'world2Unlocked': world2Unlocked,
+    'clearedQuestionIds': clearedQuestionIds,
+    'wrongQuestionIds': wrongQuestionIds,
+    'unlockedBadgeIds': unlockedBadgeIds,
+  };
 
   factory GuestProgress.fromJson(Map<String, dynamic> json) {
     final version = json['schemaVersion'] as int? ?? 2;
@@ -198,8 +197,10 @@ class GuestProgress {
       json['world1Nodes'],
       fallback: defaultWorld1Nodes,
     );
-    final w2Unlocked = json['world2Unlocked'] as bool? ??
-        (version >= 3 && world1.where((n) => n == WorldNodeState.cleared).length >= 7);
+    final w2Unlocked =
+        json['world2Unlocked'] as bool? ??
+        (version >= 3 &&
+            world1.where((n) => n == WorldNodeState.cleared).length >= 7);
     return GuestProgress(
       schemaVersion: schema,
       preferredCodeLanguage: json['preferredCodeLanguage'] as String?,
@@ -207,9 +208,7 @@ class GuestProgress {
       level: json['level'] as int? ?? 1,
       xp: json['xp'] as int? ?? 0,
       xpToNextLevel: json['xpToNextLevel'] as int? ?? 100,
-      streakCount: json['streakCount'] as int? ??
-          (json['streak'] as int?) ??
-          0,
+      streakCount: json['streakCount'] as int? ?? (json['streak'] as int?) ?? 0,
       lastDailyDate: json['lastDailyDate'] as String?,
       todayDailyCompleted: json['todayDailyCompleted'] as bool? ?? false,
       todayAllCorrect: json['todayAllCorrect'] as bool? ?? false,

@@ -12,13 +12,17 @@ List<String> evaluateNewBadges(GuestProgress before, GuestProgress after) {
     }
   }
 
-  tryUnlock('first_daily', after.todayDailyCompleted && !before.todayDailyCompleted);
+  tryUnlock(
+    'first_daily',
+    after.todayDailyCompleted && !before.todayDailyCompleted,
+  );
   tryUnlock('perfect_daily', after.todayAllCorrect && !before.todayAllCorrect);
   tryUnlock('streak_3', after.streakCount >= 3);
   tryUnlock('streak_7', after.streakCount >= 7);
   tryUnlock(
     'first_stage',
-    after.world1ClearedCount + after.world2Nodes.where((n) => n == WorldNodeState.cleared).length >
+    after.world1ClearedCount +
+            after.world2Nodes.where((n) => n == WorldNodeState.cleared).length >
         before.world1ClearedCount +
             before.world2Nodes.where((n) => n == WorldNodeState.cleared).length,
   );

@@ -64,8 +64,8 @@ class StagePlaceholderScreen extends StatelessWidget {
                     title,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -96,8 +96,9 @@ class StagePlaceholderScreen extends StatelessWidget {
                           Chip(
                             label: Text(tag),
                             visualDensity: VisualDensity.compact,
-                            backgroundColor:
-                                AppColors.surface.withValues(alpha: 0.8),
+                            backgroundColor: AppColors.surface.withValues(
+                              alpha: 0.8,
+                            ),
                             side: BorderSide(
                               color: AppColors.muted.withValues(alpha: 0.35),
                             ),

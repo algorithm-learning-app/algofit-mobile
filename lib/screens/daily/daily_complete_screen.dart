@@ -42,8 +42,8 @@ class DailyCompleteScreen extends StatelessWidget {
                     allCorrect ? '오늘 챌린지 클리어!' : '챌린지 완료',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(

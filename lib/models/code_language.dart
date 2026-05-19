@@ -1,9 +1,6 @@
 /// Supported code languages for Blank question templates.
 class CodeLanguage {
-  const CodeLanguage({
-    required this.id,
-    required this.label,
-  });
+  const CodeLanguage({required this.id, required this.label});
 
   final String id;
   final String label;

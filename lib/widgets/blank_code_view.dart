@@ -107,10 +107,7 @@ class BlankCodeView extends StatelessWidget {
 }
 
 class _BlankChip extends StatelessWidget {
-  const _BlankChip({
-    required this.blankId,
-    this.selectedValue,
-  });
+  const _BlankChip({required this.blankId, this.selectedValue});
 
   final String blankId;
   final String? selectedValue;

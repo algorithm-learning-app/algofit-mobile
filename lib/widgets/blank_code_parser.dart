@@ -24,7 +24,9 @@ List<BlankCodeSegment> parseBlankCodeTemplate(String template) {
 
   for (final match in blankPlaceholderPattern.allMatches(template)) {
     if (match.start > cursor) {
-      segments.add(BlankCodeTextSegment(template.substring(cursor, match.start)));
+      segments.add(
+        BlankCodeTextSegment(template.substring(cursor, match.start)),
+      );
     }
     segments.add(BlankCodePlaceholderSegment(match.group(1)!));
     cursor = match.end;
@@ -39,8 +41,7 @@ List<BlankCodeSegment> parseBlankCodeTemplate(String template) {
 
 /// 파싱된 세그먼트에서 빈칸 ID만 순서대로 추출합니다.
 List<String> blankIdsFromTemplate(String template) {
-  return parseBlankCodeTemplate(template)
-      .whereType<BlankCodePlaceholderSegment>()
-      .map((s) => s.blankId)
-      .toList();
+  return parseBlankCodeTemplate(
+    template,
+  ).whereType<BlankCodePlaceholderSegment>().map((s) => s.blankId).toList();
 }

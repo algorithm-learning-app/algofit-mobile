@@ -4,10 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
 
 class AlgofitBottomNavBar extends StatelessWidget {
-  const AlgofitBottomNavBar({
-    super.key,
-    this.currentIndex = 0,
-  });
+  const AlgofitBottomNavBar({super.key, this.currentIndex = 0});
 
   final int currentIndex;
 

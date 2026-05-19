@@ -24,7 +24,9 @@ class DailySession {
   factory DailySession.fromJson(Map<String, dynamic> json) {
     return DailySession(
       questionIndex: json['questionIndex'] as int,
-      answers: (json['answers'] as List<dynamic>).map((e) => e as bool).toList(),
+      answers: (json['answers'] as List<dynamic>)
+          .map((e) => e as bool)
+          .toList(),
       hearts: json['hearts'] as int,
       xpEarned: json['xpEarned'] as int,
       awaitingFeedback: json['awaitingFeedback'] as bool,
@@ -42,14 +44,14 @@ class DailySession {
   final String startedAt;
 
   Map<String, dynamic> toJson() => {
-        'questionIndex': questionIndex,
-        'answers': answers,
-        'hearts': hearts,
-        'xpEarned': xpEarned,
-        'awaitingFeedback': awaitingFeedback,
-        'lastAnswerCorrect': lastAnswerCorrect,
-        'startedAt': startedAt,
-      };
+    'questionIndex': questionIndex,
+    'answers': answers,
+    'hearts': hearts,
+    'xpEarned': xpEarned,
+    'awaitingFeedback': awaitingFeedback,
+    'lastAnswerCorrect': lastAnswerCorrect,
+    'startedAt': startedAt,
+  };
 
   DailySession copyWith({
     int? questionIndex,

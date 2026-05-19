@@ -101,20 +101,20 @@ class WorldMapNode extends StatelessWidget {
   _NodeColors _colorsFor(WorldNodeState state) {
     return switch (state) {
       WorldNodeState.cleared => _NodeColors(
-          background: AppColors.primary.withValues(alpha: 0.2),
-          border: AppColors.primary,
-          text: AppColors.primary,
-        ),
+        background: AppColors.primary.withValues(alpha: 0.2),
+        border: AppColors.primary,
+        text: AppColors.primary,
+      ),
       WorldNodeState.current => const _NodeColors(
-          background: AppColors.primary,
-          border: AppColors.primary,
-          text: AppColors.onPrimary,
-        ),
+        background: AppColors.primary,
+        border: AppColors.primary,
+        text: AppColors.onPrimary,
+      ),
       WorldNodeState.locked => _NodeColors(
-          background: AppColors.bg,
-          border: AppColors.muted.withValues(alpha: 0.4),
-          text: AppColors.muted,
-        ),
+        background: AppColors.bg,
+        border: AppColors.muted.withValues(alpha: 0.4),
+        text: AppColors.muted,
+      ),
     };
   }
 }
