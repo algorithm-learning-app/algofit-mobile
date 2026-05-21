@@ -256,7 +256,7 @@ class _DailyCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              '5문제 전부 정답 시 스트릭',
+              '5문제 완료 시 스트릭 +1 (만점이면 보너스)',
               style: TextStyle(fontSize: 13, color: AppColors.streak),
             ),
             if (completedToday) ...[

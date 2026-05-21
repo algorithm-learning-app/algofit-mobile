@@ -105,8 +105,8 @@ class ProgressRepository extends ChangeNotifier {
 
   GuestProgress completeDailyChallenge(DailySession session) {
     final today = getTodaySeoul();
-    final allCorrect =
-        session.answers.length == dailyTotal && session.answers.every((a) => a);
+    final completed = session.answers.length == dailyTotal;
+    final allCorrect = completed && session.answers.every((a) => a);
 
     var next = _progressStore.value.copyWith(
       todayDailyCompleted: true,
@@ -115,12 +115,15 @@ class ProgressRepository extends ChangeNotifier {
       lastDailyDate: today,
     );
 
-    final alreadyStreakedToday =
+    final alreadyCountedToday =
         _progressStore.value.lastDailyDate == today &&
-        _progressStore.value.todayAllCorrect;
+        _progressStore.value.todayDailyCompleted;
 
-    if (allCorrect && !alreadyStreakedToday) {
+    if (completed && !alreadyCountedToday) {
       next = next.copyWith(streakCount: _progressStore.value.streakCount + 1);
+      if (allCorrect) {
+        next = addXp(next, dailyPerfectBonusXp);
+      }
     }
 
     final before = _progressStore.value;
