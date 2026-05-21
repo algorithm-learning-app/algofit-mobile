@@ -22,7 +22,8 @@ class BlankChoicesSection extends StatelessWidget {
     required String label,
     required bool selected,
     required VoidCallback onTap,
-  }) choiceBuilder;
+  })
+  choiceBuilder;
 
   @override
   Widget build(BuildContext context) {

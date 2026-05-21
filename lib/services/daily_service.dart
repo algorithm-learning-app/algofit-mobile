@@ -7,6 +7,9 @@ import 'package:flutter/services.dart';
 
 import '../models/code_language.dart';
 import '../models/daily_question.dart';
+import 'question_pool_cache.dart';
+
+export 'question_pool_cache.dart' show QuestionPools;
 
 const dailyTotal = 5;
 const dailyPickCount = 3;
@@ -15,17 +18,7 @@ const dailyXpPerQuestion = 10;
 
 const _idPattern = r'^(pick|blank|scenario)_[a-z0-9_]+$';
 
-DailyPack? _cachedPack;
-String? _cachedPackDateKey;
-String? _cachedPackLanguage;
-QuestionPools? _cachedPools;
-
-class QuestionPools {
-  const QuestionPools({required this.picks, required this.blanks});
-
-  final List<PickQuestion> picks;
-  final List<BlankQuestion> blanks;
-}
+final _cache = QuestionPoolCache.instance;
 
 class DailyComposeResult {
   const DailyComposeResult({
@@ -73,16 +66,14 @@ Future<DailyComposeResult> loadDailyPackWithMeta({
 }) async {
   final lang = CodeLanguage.normalize(preferredLanguage);
   final dateKey = seoulDateKey(referenceUtc);
-  if (_cachedPack != null &&
-      _cachedPackDateKey == dateKey &&
-      _cachedPackLanguage == lang) {
-    return DailyComposeResult(pack: _cachedPack!);
+  if (_cache.dailyPack != null &&
+      _cache.dailyPackDateKey == dateKey &&
+      _cache.dailyPackLanguage == lang) {
+    return DailyComposeResult(pack: _cache.dailyPack!);
   }
   final pools = await loadQuestionPools();
   final composed = composeDailyPack(pools, dateKey, preferredLanguage: lang);
-  _cachedPack = composed.pack;
-  _cachedPackDateKey = dateKey;
-  _cachedPackLanguage = lang;
+  _cache.setDailyPack(pack: composed.pack, dateKey: dateKey, language: lang);
   return composed;
 }
 
@@ -174,14 +165,15 @@ BlankQuestion shuffleBlankChoices(BlankQuestion question, Random rng) {
 }
 
 Future<QuestionPools> loadQuestionPools() async {
-  if (_cachedPools != null) return _cachedPools!;
+  if (_cache.pools != null) return _cache.pools!;
   final pickRaw = await rootBundle.loadString('assets/data/pick.json');
   final blankRaw = await rootBundle.loadString('assets/data/blank.json');
-  _cachedPools = _parsePools(
+  final pools = _parsePools(
     jsonDecode(pickRaw) as Map<String, dynamic>,
     jsonDecode(blankRaw) as Map<String, dynamic>,
   );
-  return _cachedPools!;
+  _cache.setPools(pools);
+  return pools;
 }
 
 @visibleForTesting
@@ -215,16 +207,14 @@ DailyComposeResult composeDailyPack(
   final blanks = _sampleFrom(blankPool, dailyBlankCount, rng);
 
   final questions = <DailyQuestion>[...picks, ...blanks]
-      .map((q) => withShuffledChoices(q, Random(choiceShuffleSeed(dateKey, q.id))))
+      .map(
+        (q) => withShuffledChoices(q, Random(choiceShuffleSeed(dateKey, q.id))),
+      )
       .toList();
   final packId = 'daily_${dateKey.replaceAll('-', '_')}';
 
   return DailyComposeResult(
-    pack: DailyPack(
-      id: packId,
-      title: '오늘의 챌린지',
-      questions: questions,
-    ),
+    pack: DailyPack(id: packId, title: '오늘의 챌린지', questions: questions),
     usedLanguageFallback: usedFallback,
   );
 }
@@ -280,11 +270,7 @@ Future<DailyQuestion?> resolveStageQuestion(
     if (substitute != null) {
       resolved = substitute;
     } else if (lang != CodeLanguage.defaultId) {
-      final py = findBlankSubstitute(
-        q,
-        pools.blanks,
-        CodeLanguage.defaultId,
-      );
+      final py = findBlankSubstitute(q, pools.blanks, CodeLanguage.defaultId);
       if (py != null) resolved = py;
     }
   }
@@ -361,10 +347,9 @@ BlankQuestion? _tryParseBlank(Map<String, dynamic> json) {
   }
   try {
     final question = BlankQuestion.fromJson(json);
-    final placeholders = RegExp(r'\{\{(\w+)\}\}')
-        .allMatches(question.codeTemplate)
-        .map((m) => m.group(1)!)
-        .toSet();
+    final placeholders = RegExp(
+      r'\{\{(\w+)\}\}',
+    ).allMatches(question.codeTemplate).map((m) => m.group(1)!).toSet();
     final blankIds = question.blanks.map((b) => b.id).toSet();
     if (!placeholders.containsAll(blankIds) ||
         !blankIds.containsAll(placeholders)) {
@@ -403,10 +388,7 @@ bool checkPickAnswer(PickQuestion question, String choiceId) {
   return choiceId == question.correctChoiceId;
 }
 
-bool checkBlankAnswer(
-  BlankQuestion question,
-  Map<String, String> selections,
-) {
+bool checkBlankAnswer(BlankQuestion question, Map<String, String> selections) {
   return question.blanks.every((slot) {
     final picked = selections[slot.id];
     if (picked == null) return false;
@@ -426,8 +408,5 @@ String renderCodeWithSelections(
 
 /// 테스트에서 캐시 초기화용
 void resetDailyPackCacheForTest() {
-  _cachedPack = null;
-  _cachedPackDateKey = null;
-  _cachedPackLanguage = null;
-  _cachedPools = null;
+  QuestionPoolCache.instance.resetAll();
 }

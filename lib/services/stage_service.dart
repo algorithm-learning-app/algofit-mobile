@@ -16,7 +16,7 @@ Future<DailyQuestion?> loadStageQuestion(
     return null;
   }
   final ref = set.questions[questionIndex];
-  if (ref.kind == 'blank') {
+  if (ref.isBlank) {
     return resolveStageQuestion(
       ref.questionId,
       preferredLanguage: preferredLanguage,

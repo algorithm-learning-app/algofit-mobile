@@ -260,7 +260,7 @@
       "type": "blank",
       "version": 1,
       "language": "python",
-      "stem": "괄호 문자열 s가 올바른지 검사합니다. 빈칸을 채우세요.",
+      "stem": "괄호 문자열 `s`가 올바르게 닫혔는지 스택으로 검사합니다. 여는 괄호·짝 검사 빈칸을 채우세요.",
       "tags": [
         "stack"
       ],
@@ -392,7 +392,7 @@
       "type": "blank",
       "version": 1,
       "language": "python",
-      "stem": "prefix 합 배열을 만듭니다. 빈칸을 채우세요.",
+      "stem": "`prefix[i]`가 nums[0]~nums[i]의 합이 되도록 누적합 배열을 만듭니다. 빈칸을 채우세요.",
       "tags": [
         "array"
       ],
@@ -419,7 +419,7 @@
       "type": "blank",
       "version": 1,
       "language": "python",
-      "stem": "배열을 **역순**으로 만듭니다. 빈칸을 채우세요.",
+      "stem": "원본 `nums`를 바꾸지 않고 **역순** 복사본을 반환합니다. 빈칸을 채우세요.",
       "tags": [
         "array"
       ],
@@ -500,7 +500,7 @@
       "type": "blank",
       "version": 1,
       "language": "python",
-      "stem": "두 정렬 배열을 병합합니다. 빈칸을 채우세요.",
+      "stem": "두 **오름차순** 배열 `a`, `b`를 하나의 정렬 배열로 합칩니다. 더 작은 값을 넣을 때 빈칸을 채우세요.",
       "tags": [
         "two_pointer"
       ],
@@ -527,7 +527,7 @@
       "type": "blank",
       "version": 1,
       "language": "python",
-      "stem": "문자 빈도를 세는 코드입니다. 빈칸을 채우세요.",
+      "stem": "문자열 `s`에서 각 문자가 몇 번 나왔는지 해시 맵에 셉니다. 빈칸을 채우세요.",
       "tags": [
         "hash"
       ],

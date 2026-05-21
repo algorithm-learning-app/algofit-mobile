@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/daily_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../widgets/stem_text.dart';
 
 class DailyFeedbackView extends StatelessWidget {
   const DailyFeedbackView({
@@ -9,11 +10,13 @@ class DailyFeedbackView extends StatelessWidget {
     required this.isCorrect,
     required this.message,
     required this.onContinue,
+    this.explanation,
   });
 
   final bool isCorrect;
   final String message;
   final VoidCallback onContinue;
+  final String? explanation;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,18 @@ class DailyFeedbackView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 15, height: 1.45),
         ),
+        if (explanation != null && explanation!.trim().isNotEmpty) ...[
+          const SizedBox(height: 12),
+          StemText(
+            text: explanation!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: AppColors.muted,
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         Text(
           '+$dailyXpPerQuestion XP',
@@ -52,10 +67,7 @@ class DailyFeedbackView extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        FilledButton(
-          onPressed: onContinue,
-          child: const Text('다음'),
-        ),
+        FilledButton(onPressed: onContinue, child: const Text('다음')),
       ],
     );
   }

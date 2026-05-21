@@ -50,18 +50,15 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
     }
     _languageFallbackNotified = true;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          '선택한 언어 문제가 부족해 Python 빈칸으로 진행합니다.',
-        ),
-      ),
+      const SnackBar(content: Text('선택한 언어 문제가 부족해 Python 빈칸으로 진행합니다.')),
     );
   }
 
   @override
   void didUpdateWidget(covariant DailyChallengeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.step != widget.step || oldWidget.isFeedback != widget.isFeedback) {
+    if (oldWidget.step != widget.step ||
+        oldWidget.isFeedback != widget.isFeedback) {
       _loadQuestion();
     }
   }
@@ -136,19 +133,11 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.repo.progress.todayDailyCompleted && !widget.isFeedback) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/daily/complete');
-      });
-    }
-
     final step = widget.step;
     final session = _session;
 
     if (step == null || step < 1 || step > dailyTotal) {
-      return const Scaffold(
-        body: Center(child: Text('잘못된 경로예요.')),
-      );
+      return const Scaffold(body: Center(child: Text('잘못된 경로예요.')));
     }
 
     return ListenableBuilder(
@@ -156,40 +145,40 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
       builder: (context, _) {
         final hearts = widget.repo.progress.hearts;
         return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _DailyTopBar(
-                    hearts: hearts,
-                    onBack: () => context.go('/home'),
-                  ),
-                  const SizedBox(height: 16),
-                  _ProgressDots(
-                    step: step,
-                    answeredCount: session?.answers.length ?? 0,
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: _buildCardContent(session),
+          body: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _DailyTopBar(
+                        hearts: hearts,
+                        onBack: () => context.go('/home'),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      _ProgressDots(
+                        step: step,
+                        answeredCount: session?.answers.length ?? 0,
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: _buildCardContent(session),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
       },
     );
   }
@@ -213,6 +202,7 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
       return DailyFeedbackView(
         isCorrect: isCorrect,
         message: message,
+        explanation: _question!.explanation,
         onContinue: _handleFeedbackContinue,
       );
     }

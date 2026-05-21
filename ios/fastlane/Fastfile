@@ -22,13 +22,45 @@ def flutter_ipa_path
   matches.max_by { |p| File.mtime(p) }
 end
 
+def flutter_release_dart_defines
+  defines = []
+  secret = ENV["HANDOFF_SECRET"]&.strip
+  base_url = ENV["PC_WEB_BASE_URL"]&.strip
+  defines << "HANDOFF_SECRET=#{secret}" if secret && !secret.empty?
+  defines << "PC_WEB_BASE_URL=#{base_url}" if base_url && !base_url.empty?
+  defines
+end
+
+def append_flutter_dart_defines(build_args, defines)
+  defines.each do |define|
+    build_args.push("--dart-define", define)
+  end
+  build_args
+end
+
+def warn_missing_release_handoff_env
+  unless ENV["HANDOFF_SECRET"]&.strip&.empty? == false
+    UI.important(
+      "HANDOFF_SECRET not set — release binary will embed the dev default. " \
+      "Set HANDOFF_SECRET (and PC_WEB_BASE_URL) in fastlane/.env or CI."
+    )
+  end
+  unless ENV["PC_WEB_BASE_URL"]&.strip&.empty? == false
+    UI.important(
+      "PC_WEB_BASE_URL not set — release build uses compile-time default (localhost)."
+    )
+  end
+end
+
 def build_flutter_ipa
   team = ENV["DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
   UI.important("DEVELOPMENT_TEAM / FASTLANE_TEAM_ID not set — Xcode must resolve signing.") unless team
+  warn_missing_release_handoff_env
 
   Dir.chdir(FLUTTER_ROOT) do
     sh("flutter", "pub", "get")
     build_args = ["build", "ipa", "--release"]
+    append_flutter_dart_defines(build_args, flutter_release_dart_defines)
     sh("flutter", *build_args)
   end
 
@@ -40,10 +72,13 @@ end
 def build_flutter_macos_release
   team = ENV["DEVELOPMENT_TEAM"] || ENV["FASTLANE_TEAM_ID"]
   UI.important("DEVELOPMENT_TEAM / FASTLANE_TEAM_ID not set — Xcode must resolve signing.") unless team
+  warn_missing_release_handoff_env
 
   Dir.chdir(FLUTTER_ROOT) do
     sh("flutter", "pub", "get")
-    sh("flutter", "build", "macos", "--release")
+    build_args = ["build", "macos", "--release"]
+    append_flutter_dart_defines(build_args, flutter_release_dart_defines)
+    sh("flutter", *build_args)
   end
 end
 

@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Five-slot heart display (filled vs dimmed).
 class HeartsIndicator extends StatelessWidget {
-  const HeartsIndicator({
-    super.key,
-    required this.hearts,
-    this.iconSize = 18,
-  });
+  const HeartsIndicator({super.key, required this.hearts, this.iconSize = 18});
 
   final int hearts;
   final double iconSize;
@@ -25,9 +21,7 @@ class HeartsIndicator extends StatelessWidget {
               '❤️',
               style: TextStyle(
                 fontSize: iconSize,
-                color: Colors.white.withValues(
-                  alpha: i < filled ? 1 : 0.35,
-                ),
+                color: Colors.white.withValues(alpha: i < filled ? 1 : 0.35),
               ),
             ),
           );

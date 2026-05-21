@@ -1,0 +1,5 @@
+# Release signing — copy to android/key.properties (gitignored) and fill values.
+storePassword=your-store-password
+keyPassword=your-key-password
+keyAlias=algofit
+storeFile=../keystore/algofit-release.jks

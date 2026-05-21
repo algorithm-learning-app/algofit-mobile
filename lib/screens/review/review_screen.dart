@@ -83,6 +83,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                   message: _lastCorrect!
                                       ? q.feedbackCorrect
                                       : q.feedbackWrong,
+                                  explanation: q.explanation,
                                   onContinue: _handleContinue,
                                 )
                               : SingleChildScrollView(
@@ -98,48 +99,48 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   },
                 )
               : wrongIds.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('✨', style: TextStyle(fontSize: 48)),
-                            SizedBox(height: 12),
-                            Text(
-                              '복습할 오답이 없어요',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Daily나 스테이지에서 틀린 문항이 여기에 쌓여요.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: AppColors.muted),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                      itemCount: wrongIds.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final id = wrongIds[index];
-                        return Card(
-                          child: ListTile(
-                            title: Text(id),
-                            subtitle: const Text('다시 풀기'),
-                            trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: () => _startReview(id),
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('✨', style: TextStyle(fontSize: 48)),
+                        SizedBox(height: 12),
+                        Text(
+                          '복습할 오답이 없어요',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
                           ),
-                        );
-                      },
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Daily나 스테이지에서 틀린 문항이 여기에 쌓여요.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.muted),
+                        ),
+                      ],
                     ),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                  itemCount: wrongIds.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final id = wrongIds[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(id),
+                        subtitle: const Text('다시 풀기'),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => _startReview(id),
+                      ),
+                    );
+                  },
+                ),
           bottomNavigationBar: const AlgofitBottomNavBar(currentIndex: 2),
         );
       },

@@ -18,6 +18,7 @@ class AlgorithmCatalogScreen extends StatefulWidget {
 
 class _AlgorithmCatalogScreenState extends State<AlgorithmCatalogScreen> {
   Map<String, double> _progressByTag = {};
+  int _loadToken = 0;
 
   @override
   void initState() {
@@ -33,17 +34,19 @@ class _AlgorithmCatalogScreenState extends State<AlgorithmCatalogScreen> {
   }
 
   Future<void> _loadProgress() async {
+    final token = ++_loadToken;
     final cleared = widget.repo.progress.clearedQuestionIds;
     final next = <String, double>{};
     for (final entry in algorithmCatalog) {
       final pool = await questionsForPattern(entry.patternTag);
+      if (!mounted || token != _loadToken) return;
       next[entry.patternTag] = progressPercentForPattern(
         patternTag: entry.patternTag,
         clearedQuestionIds: cleared,
         pool: pool,
       );
     }
-    if (mounted) {
+    if (mounted && token == _loadToken) {
       setState(() => _progressByTag = next);
     }
   }
@@ -63,9 +66,8 @@ class _AlgorithmCatalogScreenState extends State<AlgorithmCatalogScreen> {
                   children: [
                     Text(
                       '알고리즘',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 4),
                     const Text(
@@ -142,8 +144,9 @@ class _AlgorithmCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: percent,
                         minHeight: 6,
-                        backgroundColor:
-                            AppColors.muted.withValues(alpha: 0.25),
+                        backgroundColor: AppColors.muted.withValues(
+                          alpha: 0.25,
+                        ),
                         color: AppColors.primary,
                       ),
                     ),

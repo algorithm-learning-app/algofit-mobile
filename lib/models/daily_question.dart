@@ -34,8 +34,9 @@ class BlankSlot {
       correctAnswers: (json['correctAnswers'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
-      choices:
-          (json['choices'] as List<dynamic>).map((e) => e as String).toList(),
+      choices: (json['choices'] as List<dynamic>)
+          .map((e) => e as String)
+          .toList(),
     );
   }
 
@@ -93,9 +94,8 @@ class PickQuestion extends DailyQuestion {
           .map((e) => DailyChoice.fromJson(e as Map<String, dynamic>))
           .toList(),
       correctChoiceId: json['correctChoiceId'] as String,
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const [],
       pickSubtype: json['pickSubtype'] as String?,
     );
@@ -133,9 +133,8 @@ class BlankQuestion extends DailyQuestion {
       blanks: (json['blanks'] as List<dynamic>)
           .map((e) => BlankSlot.fromJson(e as Map<String, dynamic>))
           .toList(),
-      tags: (json['tags'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      tags:
+          (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           const [],
     );
   }

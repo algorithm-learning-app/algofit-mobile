@@ -33,9 +33,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: BlankCodeView(
-              codeTemplate: 'if {{b1}}:\n    {{b2}}',
-            ),
+            body: BlankCodeView(codeTemplate: 'if {{b1}}:\n    {{b2}}'),
           ),
         ),
       );

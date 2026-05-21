@@ -23,7 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowLanguagePrompt());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _maybeShowLanguagePrompt(),
+    );
   }
 
   Future<void> _maybeShowLanguagePrompt() async {
@@ -192,8 +194,8 @@ class _DailyCard extends StatelessWidget {
                       Text(
                         '오늘의 챌린지',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -250,10 +252,7 @@ class _DailyCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${progress.dailyProgress}/${progress.dailyTotal}',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             const Text(
@@ -296,9 +295,9 @@ class _BadgesSection extends StatelessWidget {
           children: [
             Text(
               '뱃지',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
@@ -362,9 +361,7 @@ class _PcBonusCard extends StatelessWidget {
       color: AppColors.pcAccent.withValues(alpha: 0.12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: AppColors.pcAccent.withValues(alpha: 0.35),
-        ),
+        side: BorderSide(color: AppColors.pcAccent.withValues(alpha: 0.35)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -392,10 +389,7 @@ class _PcBonusCard extends StatelessWidget {
                 children: [
                   Text(
                     'PC에서 추가 XP',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   SizedBox(height: 2),
                   Text(
@@ -439,48 +433,48 @@ class _WorldPreview extends StatelessWidget {
                   Text(
                     'World 1',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                TextButton(
-                  onPressed: () => context.push('/world/1'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    '전체 보기',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned(
-                  left: 24,
-                  right: 24,
-                  child: Container(
-                    height: 2,
-                    color: AppColors.muted.withValues(alpha: 0.3),
+                  TextButton(
+                    onPressed: () => context.push('/world/1'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      '전체 보기',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    for (var i = 0; i < nodes.length && i < 5; i++)
-                      _WorldNode(index: i + 1, state: nodes[i]),
-                  ],
-                ),
-              ],
-            ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    left: 24,
+                    right: 24,
+                    child: Container(
+                      height: 2,
+                      color: AppColors.muted.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      for (var i = 0; i < nodes.length && i < 5; i++)
+                        _WorldNode(index: i + 1, state: nodes[i]),
+                    ],
+                  ),
+                ],
+              ),
             ],
           ),
         ),

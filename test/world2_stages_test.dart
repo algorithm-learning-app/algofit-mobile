@@ -8,11 +8,7 @@ void main() {
     expect(world2MapStages.length, world2TotalStages);
     expect(world2TotalStages, 10);
     for (final stage in world2MapStages) {
-      expect(
-        hasWorld2StageContent(stage.id),
-        isTrue,
-        reason: stage.id,
-      );
+      expect(hasWorld2StageContent(stage.id), isTrue, reason: stage.id);
     }
     expect(world2StageQuestions.length, world2MapStages.length);
     for (final stage in world2MapStages) {

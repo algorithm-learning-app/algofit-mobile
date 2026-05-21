@@ -5,6 +5,7 @@ import '../../../services/daily_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/blank_choices_section.dart';
 import '../../../widgets/blank_code_view.dart';
+import '../../../widgets/stem_text.dart';
 
 class DailyQuestionView extends StatefulWidget {
   const DailyQuestionView({
@@ -67,8 +68,8 @@ class _DailyQuestionViewState extends State<DailyQuestionView> {
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          q.stem,
+        StemText(
+          text: q.stem,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -103,26 +104,15 @@ class _DailyQuestionViewState extends State<DailyQuestionView> {
 
   List<Widget> _buildBlank(BlankQuestion q) {
     return [
-      BlankCodeView(
-        codeTemplate: q.codeTemplate,
-        selections: _blankSelections,
-      ),
+      BlankCodeView(codeTemplate: q.codeTemplate, selections: _blankSelections),
       const SizedBox(height: 12),
       BlankChoicesSection(
         blanks: q.blanks,
         selections: _blankSelections,
         onSelect: (blankId, choice) =>
             setState(() => _blankSelections[blankId] = choice),
-        choiceBuilder: ({
-          required label,
-          required selected,
-          required onTap,
-        }) =>
-            _ChoiceButton(
-          label: label,
-          selected: selected,
-          onTap: onTap,
-        ),
+        choiceBuilder: ({required label, required selected, required onTap}) =>
+            _ChoiceButton(label: label, selected: selected, onTap: onTap),
       ),
     ];
   }
@@ -142,9 +132,7 @@ class _ChoiceButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected
-          ? AppColors.primary.withValues(alpha: 0.2)
-          : AppColors.bg,
+      color: selected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.bg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(

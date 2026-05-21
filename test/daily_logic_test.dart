@@ -34,8 +34,9 @@ void main() {
     expect(shuffled.choices.map((c) => c.id).toSet(), {'c1', 'c2', 'c3', 'c4'});
     expect(checkPickAnswer(shuffled, 'c1'), isTrue);
     expect(checkPickAnswer(shuffled, 'c2'), isFalse);
-    final correctIndex =
-        shuffled.choices.indexWhere((c) => c.id == shuffled.correctChoiceId);
+    final correctIndex = shuffled.choices.indexWhere(
+      (c) => c.id == shuffled.correctChoiceId,
+    );
     expect(correctIndex, isNot(0));
   });
 
@@ -56,7 +57,9 @@ void main() {
   test('composeDailyPack은 일부 pick에서 정답이 1번이 아닐 수 있다', () async {
     final pools = await loadQuestionPools();
     final pack = composeDailyPack(pools, '2026-05-19').pack;
-    final pickCorrectIndices = pack.questions.whereType<PickQuestion>().map((q) {
+    final pickCorrectIndices = pack.questions.whereType<PickQuestion>().map((
+      q,
+    ) {
       return q.choices.indexWhere((c) => c.id == q.correctChoiceId);
     });
     expect(pickCorrectIndices.any((i) => i != 0), isTrue);
@@ -95,14 +98,8 @@ void main() {
         ),
       ],
     );
-    expect(
-      checkBlankAnswer(q, {'b1': 'left < right'}),
-      isTrue,
-    );
-    expect(
-      checkBlankAnswer(q, {'b1': 'left > right'}),
-      isFalse,
-    );
+    expect(checkBlankAnswer(q, {'b1': 'left < right'}), isTrue);
+    expect(checkBlankAnswer(q, {'b1': 'left > right'}), isFalse);
   });
 
   test('recordQuestionOutcome은 deductHeartOnWrong일 때만 하트를 깎는다', () async {
@@ -169,10 +166,8 @@ void main() {
     expect(pack.title, '오늘의 챌린지');
     expect(pack.id, startsWith('daily_'));
 
-    final pickCount =
-        pack.questions.whereType<PickQuestion>().length;
-    final blankCount =
-        pack.questions.whereType<BlankQuestion>().length;
+    final pickCount = pack.questions.whereType<PickQuestion>().length;
+    final blankCount = pack.questions.whereType<BlankQuestion>().length;
     expect(pickCount, dailyPickCount);
     expect(blankCount, dailyBlankCount);
   });
@@ -185,10 +180,7 @@ void main() {
     final packB = composeDailyPack(pools, dateKey).pack;
 
     expect(packA.id, 'daily_2026_05_18');
-    expect(
-      packA.questions.map((q) => q.id),
-      packB.questions.map((q) => q.id),
-    );
+    expect(packA.questions.map((q) => q.id), packB.questions.map((q) => q.id));
     expect(packA.questions.length, dailyTotal);
   });
 
@@ -215,8 +207,8 @@ void main() {
     expect(result.usedLanguageFallback, isTrue);
     expect(
       result.pack.questions.whereType<BlankQuestion>().every(
-            (q) => q.language == 'python',
-          ),
+        (q) => q.language == 'python',
+      ),
       isTrue,
     );
   });

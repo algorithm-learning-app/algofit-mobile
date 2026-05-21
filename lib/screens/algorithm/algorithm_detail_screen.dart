@@ -99,21 +99,21 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
       listenable: widget.repo,
       builder: (context, _) {
         return Scaffold(
-      appBar: AppBar(
-        title: Text('${entry.icon} ${entry.title}'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Center(
-              child: HeartsIndicator(hearts: widget.repo.progress.hearts),
-            ),
+          appBar: AppBar(
+            title: Text('${entry.icon} ${entry.title}'),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Center(
+                  child: HeartsIndicator(hearts: widget.repo.progress.hearts),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: pool == null
-            ? const Center(child: Text('불러오는 중…'))
-            : pool.isEmpty
+          body: SafeArea(
+            child: pool == null
+                ? const Center(child: Text('불러오는 중…'))
+                : pool.isEmpty
                 ? const Center(child: Text('이 패턴 문항이 아직 없어요.'))
                 : Padding(
                     padding: const EdgeInsets.all(16),
@@ -139,6 +139,7 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
                                       message: _lastCorrect!
                                           ? pool[_index].feedbackCorrect
                                           : pool[_index].feedbackWrong,
+                                      explanation: pool[_index].explanation,
                                       onContinue: _handleContinue,
                                     )
                                   : SingleChildScrollView(
@@ -159,7 +160,10 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
                             for (final q in pool)
                               Chip(
                                 label: Text(
-                                  q.id.replaceFirst(RegExp(r'^(pick|blank)_'), ''),
+                                  q.id.replaceFirst(
+                                    RegExp(r'^(pick|blank)_'),
+                                    '',
+                                  ),
                                   style: const TextStyle(fontSize: 11),
                                 ),
                                 backgroundColor: cleared.contains(q.id)
@@ -171,8 +175,8 @@ class _AlgorithmDetailScreenState extends State<AlgorithmDetailScreen> {
                       ],
                     ),
                   ),
-      ),
-    );
+          ),
+        );
       },
     );
   }
