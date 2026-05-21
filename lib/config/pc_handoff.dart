@@ -18,11 +18,14 @@ const _handoffSecret = String.fromEnvironment(
 
 const _handoffTtl = Duration(minutes: 5);
 
+/// guestId·exp 구분자 (guestId에 `.`이 들어가도 파싱이 깨지지 않도록 고정).
+const _handoffFieldSep = '|';
+
 /// guestId 대신 서명된 단기 handoff 토큰을 발급한다.
 String createHandoffToken(String guestId) {
   final exp =
       DateTime.now().toUtc().add(_handoffTtl).millisecondsSinceEpoch;
-  final payload = '$guestId.$exp';
+  final payload = '$guestId$_handoffFieldSep$exp';
   final mac = Hmac(sha256, utf8.encode(_handoffSecret))
       .convert(utf8.encode(payload))
       .toString();
@@ -47,7 +50,7 @@ String? verifyHandoffToken(String token) {
         .toString();
     if (mac != expected) return null;
 
-    final guestSep = payload.lastIndexOf('.');
+    final guestSep = payload.lastIndexOf(_handoffFieldSep);
     if (guestSep <= 0) return null;
 
     final guestId = payload.substring(0, guestSep);

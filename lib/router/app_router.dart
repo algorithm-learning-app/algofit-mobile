@@ -113,6 +113,8 @@ GoRouter createAppRouter(ProgressRepository repo) {
       ),
       GoRoute(
         path: '/daily/:step',
+        // Daily 완료 후: 일반 step 딥링크는 complete로 보내고,
+        // `/daily/:step/feedback`만 예외로 피드백 화면을 유지한다.
         redirect: (context, state) {
           if (!repo.progress.todayDailyCompleted) return null;
           final segments = state.uri.pathSegments;

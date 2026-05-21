@@ -13,4 +13,10 @@ void main() {
     final token = createHandoffToken('abc');
     expect(verifyHandoffToken('${token}x'), isNull);
   });
+
+  test('handoff 토큰은 guestId에 점(.)이 있어도 복원한다', () {
+    const guestId = 'guest.with.dots';
+    final token = createHandoffToken(guestId);
+    expect(verifyHandoffToken(token), guestId);
+  });
 }
