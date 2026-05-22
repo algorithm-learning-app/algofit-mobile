@@ -15,6 +15,7 @@ const dailyTotal = 5;
 const dailyPickCount = 3;
 const dailyBlankCount = 2;
 const dailyXpPerQuestion = 10;
+const dailyPerfectBonusXp = 20;
 
 const _idPattern = r'^(pick|blank|scenario)_[a-z0-9_]+$';
 

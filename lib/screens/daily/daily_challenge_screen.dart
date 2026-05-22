@@ -118,7 +118,8 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
           '/daily/complete',
           extra: DailyCompleteArgs(
             allCorrect: allCorrect,
-            xpEarned: session.xpEarned,
+            xpEarned:
+                session.xpEarned + (allCorrect ? dailyPerfectBonusXp : 0),
           ),
         );
       }

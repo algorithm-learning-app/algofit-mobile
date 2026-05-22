@@ -134,8 +134,9 @@ void main() {
     expect(result.progress.xp, dailyXpPerQuestion);
   });
 
-  test('completeDailyChallenge는 5/5 정답일 때만 streak 증가', () async {
+  test('completeDailyChallenge: 5/5 정답이면 streak +1, allCorrect, 보너스 XP', () async {
     final repo = await ProgressRepository.create();
+    final xpBefore = repo.progress.xp;
 
     var session = repo.startDailySession();
     for (var i = 0; i < dailyTotal; i++) {
@@ -150,6 +151,32 @@ void main() {
     expect(progress.todayAllCorrect, isTrue);
     expect(progress.streakCount, 1);
     expect(progress.todayDailyCompleted, isTrue);
+    expect(
+      progress.xp - xpBefore,
+      dailyXpPerQuestion * dailyTotal + dailyPerfectBonusXp,
+    );
+  });
+
+  test('completeDailyChallenge: 부분 정답도 챌린지 완료 시 streak +1 (보너스 없음)',
+      () async {
+    final repo = await ProgressRepository.create();
+    final xpBefore = repo.progress.xp;
+
+    var session = repo.startDailySession();
+    for (var i = 0; i < dailyTotal; i++) {
+      final isCorrect = i < 2;
+      final recorded = repo.recordDailyAnswer(session, isCorrect);
+      session = recorded.session;
+      if (i < dailyTotal - 1) {
+        session = repo.advanceAfterFeedback(session);
+      }
+    }
+
+    final progress = repo.completeDailyChallenge(session);
+    expect(progress.todayAllCorrect, isFalse);
+    expect(progress.streakCount, 1);
+    expect(progress.todayDailyCompleted, isTrue);
+    expect(progress.xp - xpBefore, dailyXpPerQuestion * dailyTotal);
   });
 
   test('loadQuestionPools는 pick/blank JSON 풀을 로드한다', () async {

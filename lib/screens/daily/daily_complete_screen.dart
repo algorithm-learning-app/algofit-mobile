@@ -33,13 +33,13 @@ class DailyCompleteScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    allCorrect ? '🔥' : '🌙',
+                    allCorrect ? '💯' : '🔥',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 56),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    allCorrect ? '오늘 챌린지 클리어!' : '챌린지 완료',
+                    allCorrect ? '완벽한 하루!' : '오늘도 완료!',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -48,8 +48,8 @@ class DailyCompleteScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     allCorrect
-                        ? '$dailyTotal문제 전부 정답! 스트릭이 1일 늘었어요.'
-                        : '오늘 스트릭은 내일 다시 도전해 보세요. 5문제 전부 정답이면 스트릭이 올라가요.',
+                        ? '$dailyTotal문제 전부 정답! 스트릭 +1, 보너스 +$dailyPerfectBonusXp XP.'
+                        : '스트릭이 1일 늘었어요. 꾸준함이 진짜 실력이에요.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 15,
@@ -57,27 +57,25 @@ class DailyCompleteScreen extends StatelessWidget {
                       height: 1.45,
                     ),
                   ),
-                  if (allCorrect) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('🔥', style: TextStyle(fontSize: 20)),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$streak일 연속',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.streak,
-                          ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('🔥', style: TextStyle(fontSize: 20)),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$streak일 연속',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.streak,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    '이번 세션 +$xpEarned XP',
+                    '이번 세션 +$xpEarned XP${allCorrect ? ' (보너스 포함)' : ''}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 15),
                   ),
