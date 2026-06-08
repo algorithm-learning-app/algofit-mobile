@@ -7,6 +7,7 @@ import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/code_language_picker.dart';
+import '../../widgets/mascot.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.repo});
@@ -208,12 +209,7 @@ class _DailyCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Image.asset(
-                  'assets/images/mascot/algofit-mascot-neutral.png',
-                  width: 72,
-                  height: 72,
-                  fit: BoxFit.contain,
-                ),
+                const Mascot(MascotMood.neutral, size: 72),
               ],
             ),
             const SizedBox(height: 16),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../services/daily_service.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/mascot.dart';
 
 class DailyCompleteScreen extends StatelessWidget {
   const DailyCompleteScreen({
@@ -32,10 +33,8 @@ class DailyCompleteScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    allCorrect ? '💯' : '🔥',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 56),
+                  const Center(
+                    child: Mascot(MascotMood.happy, size: 132, animate: true),
                   ),
                   const SizedBox(height: 16),
                   Text(

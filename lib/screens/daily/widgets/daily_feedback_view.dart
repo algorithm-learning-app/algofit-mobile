@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/daily_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../widgets/mascot.dart';
 import '../../../widgets/stem_text.dart';
 
 class DailyFeedbackView extends StatelessWidget {
@@ -23,10 +24,12 @@ class DailyFeedbackView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          isCorrect ? '✨' : '💔',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 40),
+        Center(
+          child: Mascot(
+            isCorrect ? MascotMood.happy : MascotMood.sad,
+            size: 104,
+            animate: true,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
