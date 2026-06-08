@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/daily_service.dart';
 import '../../../theme/app_colors.dart';
+import '../../../theme/app_theme.dart';
 import '../../../widgets/mascot.dart';
 import '../../../widgets/stem_text.dart';
 
@@ -36,8 +37,8 @@ class DailyFeedbackView extends StatelessWidget {
           isCorrect ? '정답!' : '오답',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
+            fontFamily: AppTheme.displayFontFamily,
+            fontSize: 24,
             color: isCorrect ? AppColors.primary : const Color(0xFFF87171),
           ),
         ),
