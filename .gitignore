@@ -52,3 +52,6 @@ app.*.map.json
 AuthKey_*.p8
 **/asc_api_key.p8
 ios/fastlane/.env
+
+# OMC (oh-my-claudecode) local state
+.omc/
