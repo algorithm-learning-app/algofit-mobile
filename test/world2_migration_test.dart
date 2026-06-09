@@ -44,4 +44,22 @@ void main() {
     expect(nodes.take(10).every((n) => n == WorldNodeState.cleared), isTrue);
     expect(nodes[10], WorldNodeState.current);
   });
+
+  test('target 초과 저장본은 target으로 트림된다', () async {
+    seedWorld2Nodes(List.filled(18, 'locked'));
+    final repo = await ProgressRepository.create();
+    expect(repo.progress.world2Nodes.length, world2TotalStages);
+  });
+
+  test('부분 진행 저장본은 패딩만 되고 새 칸은 locked로 유지된다', () async {
+    seedWorld2Nodes([...List.filled(9, 'cleared'), 'current']);
+    final repo = await ProgressRepository.create();
+    final nodes = repo.progress.world2Nodes;
+    expect(nodes.length, world2TotalStages);
+    expect(nodes[9], WorldNodeState.current);
+    expect(
+      nodes.sublist(10).every((n) => n == WorldNodeState.locked),
+      isTrue,
+    );
+  });
 }
