@@ -43,6 +43,26 @@ const world2StageQuestions = <String, StageQuestionSet>{
     StageQuestionRef(questionId: 'pick_bfs_008', kind: 'pick'),
     StageQuestionRef(questionId: 'blank_bfs_003', kind: 'blank'),
   ]),
+  'stage_w2_11': StageQuestionSet([
+    StageQuestionRef(questionId: 'pick_stack_001', kind: 'pick'),
+    StageQuestionRef(questionId: 'blank_stack_005', kind: 'blank'),
+  ]),
+  'stage_w2_12': StageQuestionSet([
+    StageQuestionRef(questionId: 'pick_stack_002', kind: 'pick'),
+    StageQuestionRef(questionId: 'blank_stack_004', kind: 'blank'),
+  ]),
+  'stage_w2_13': StageQuestionSet([
+    StageQuestionRef(questionId: 'pick_bfs_001', kind: 'pick'),
+    StageQuestionRef(questionId: 'blank_bfs_004', kind: 'blank'),
+  ]),
+  'stage_w2_14': StageQuestionSet([
+    StageQuestionRef(questionId: 'pick_bfs_009', kind: 'pick'),
+    StageQuestionRef(questionId: 'blank_bfs_005', kind: 'blank'),
+  ]),
+  'stage_w2_15': StageQuestionSet([
+    StageQuestionRef(questionId: 'pick_stack_004', kind: 'pick'),
+    StageQuestionRef(questionId: 'pick_bfs_002', kind: 'pick'),
+  ]),
 };
 
 bool hasWorld2StageContent(String stageId) =>
