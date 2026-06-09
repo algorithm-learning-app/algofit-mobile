@@ -64,7 +64,7 @@ List<WorldNodeState> defaultWorld2Nodes({bool unlocked = false}) =>
 
 class GuestProgress {
   GuestProgress({
-    this.schemaVersion = 5,
+    this.schemaVersion = 6,
     this.guestId = '',
     this.preferredCodeLanguage,
     this.level = 1,
@@ -85,6 +85,9 @@ class GuestProgress {
     this.clearedQuestionIds = const [],
     this.wrongQuestionIds = const [],
     this.unlockedBadgeIds = const [],
+    this.dailyReminderEnabled = false,
+    this.reminderHour = 20,
+    this.reminderMinute = 0,
   }) : world1Nodes = world1Nodes ?? defaultWorld1Nodes,
        world2Nodes = world2Nodes ?? defaultWorld2NodesLocked;
 
@@ -111,6 +114,9 @@ class GuestProgress {
   final List<String> clearedQuestionIds;
   final List<String> wrongQuestionIds;
   final List<String> unlockedBadgeIds;
+  final bool dailyReminderEnabled;
+  final int reminderHour;
+  final int reminderMinute;
 
   double get xpPercent =>
       xpToNextLevel > 0 ? (xp / xpToNextLevel).clamp(0.0, 1.0) : 0.0;
@@ -147,6 +153,9 @@ class GuestProgress {
     List<String>? clearedQuestionIds,
     List<String>? wrongQuestionIds,
     List<String>? unlockedBadgeIds,
+    bool? dailyReminderEnabled,
+    int? reminderHour,
+    int? reminderMinute,
   }) {
     return GuestProgress(
       schemaVersion: schemaVersion,
@@ -172,6 +181,9 @@ class GuestProgress {
       clearedQuestionIds: clearedQuestionIds ?? this.clearedQuestionIds,
       wrongQuestionIds: wrongQuestionIds ?? this.wrongQuestionIds,
       unlockedBadgeIds: unlockedBadgeIds ?? this.unlockedBadgeIds,
+      dailyReminderEnabled: dailyReminderEnabled ?? this.dailyReminderEnabled,
+      reminderHour: reminderHour ?? this.reminderHour,
+      reminderMinute: reminderMinute ?? this.reminderMinute,
     );
   }
 
@@ -198,11 +210,14 @@ class GuestProgress {
     'clearedQuestionIds': clearedQuestionIds,
     'wrongQuestionIds': wrongQuestionIds,
     'unlockedBadgeIds': unlockedBadgeIds,
+    'dailyReminderEnabled': dailyReminderEnabled,
+    'reminderHour': reminderHour,
+    'reminderMinute': reminderMinute,
   };
 
   factory GuestProgress.fromJson(Map<String, dynamic> json) {
     final version = json['schemaVersion'] as int? ?? 2;
-    final schema = version < 5 ? 5 : version;
+    final schema = version < 6 ? 6 : version;
     final world1 = _parseWorldNodes(
       json['world1Nodes'],
       fallback: defaultWorld1Nodes,
@@ -236,6 +251,9 @@ class GuestProgress {
       clearedQuestionIds: _parseStringList(json['clearedQuestionIds']),
       wrongQuestionIds: _parseStringList(json['wrongQuestionIds']),
       unlockedBadgeIds: _parseStringList(json['unlockedBadgeIds']),
+      dailyReminderEnabled: json['dailyReminderEnabled'] as bool? ?? false,
+      reminderHour: json['reminderHour'] as int? ?? 20,
+      reminderMinute: json['reminderMinute'] as int? ?? 0,
     );
   }
 

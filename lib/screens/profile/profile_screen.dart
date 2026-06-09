@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../data/badges.dart';
+import '../../services/notification_service.dart';
 import '../../services/progress_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav_bar.dart';
@@ -68,6 +69,15 @@ class ProfileScreen extends StatelessWidget {
                       selectedId: repo.effectiveCodeLanguage,
                       onChanged: (id) => repo.setPreferredCodeLanguage(id),
                     ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '알림',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _ReminderCard(repo: repo),
                     const SizedBox(height: 20),
                     Text(
                       '뱃지 ${unlocked.length} / ${kBadges.length}',
@@ -174,6 +184,126 @@ class ProfileScreen extends StatelessWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('$label 복사됨')));
+  }
+}
+
+class _ReminderCard extends StatelessWidget {
+  const _ReminderCard({required this.repo});
+
+  final ProgressRepository repo;
+
+  String _formatTime(int hour, int minute) {
+    final h = hour.toString().padLeft(2, '0');
+    final m = minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  Future<void> _onToggle(BuildContext context, bool enabled) async {
+    final notifications = NotificationService.instance;
+    if (enabled) {
+      final granted = await notifications.requestPermission();
+      if (!granted) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('알림 권한이 필요해요')),
+        );
+        return;
+      }
+      final progress = repo.progress;
+      await repo.setDailyReminder(
+        enabled: true,
+        hour: progress.reminderHour,
+        minute: progress.reminderMinute,
+      );
+      await notifications.scheduleDailyReminder(
+        hour: progress.reminderHour,
+        minute: progress.reminderMinute,
+      );
+    } else {
+      await repo.setDailyReminder(enabled: false);
+      await notifications.cancelDailyReminder();
+    }
+  }
+
+  Future<void> _onChangeTime(BuildContext context) async {
+    final progress = repo.progress;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: progress.reminderHour,
+        minute: progress.reminderMinute,
+      ),
+    );
+    if (picked == null) return;
+    await repo.setDailyReminder(
+      enabled: true,
+      hour: picked.hour,
+      minute: picked.minute,
+    );
+    await NotificationService.instance.scheduleDailyReminder(
+      hour: picked.hour,
+      minute: picked.minute,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = repo.progress;
+    final enabled = progress.dailyReminderEnabled;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              activeThumbColor: AppColors.primary,
+              title: const Text(
+                '매일 학습 리마인드',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              subtitle: const Text(
+                '매일 정해진 시간에 챌린지 알림을 받아요.',
+                style: TextStyle(fontSize: 13, color: AppColors.muted),
+              ),
+              value: enabled,
+              onChanged: (value) => _onToggle(context, value),
+            ),
+            if (enabled)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(
+                  Icons.schedule_rounded,
+                  color: AppColors.primary,
+                ),
+                title: const Text(
+                  '알림 시간',
+                  style: TextStyle(fontSize: 14, color: AppColors.muted),
+                ),
+                trailing: Text(
+                  _formatTime(progress.reminderHour, progress.reminderMinute),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+                onTap: () => _onChangeTime(context),
+              ),
+            if (enabled)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '기기 절전 상태에 따라 알림이 정시보다 다소 늦을 수 있어요.',
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

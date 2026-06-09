@@ -223,6 +223,20 @@ class ProgressRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setDailyReminder({
+    required bool enabled,
+    int? hour,
+    int? minute,
+  }) async {
+    _progressStore.value = _progressStore.value.copyWith(
+      dailyReminderEnabled: enabled,
+      reminderHour: hour,
+      reminderMinute: minute,
+    );
+    await _progressStore.persist();
+    notifyListeners();
+  }
+
   /// PC 웹 이어하기 URL (단기 handoff 토큰, guestId 직접 노출 없음).
   String createPcContinueUrl() {
     return pcContinueUrl(createHandoffToken(_progressStore.value.guestId));
