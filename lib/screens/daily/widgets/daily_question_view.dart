@@ -5,6 +5,7 @@ import '../../../services/daily_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/blank_choices_section.dart';
 import '../../../widgets/blank_code_view.dart';
+import '../../../widgets/choice_tile.dart';
 import '../../../widgets/stem_text.dart';
 
 class DailyQuestionView extends StatefulWidget {
@@ -93,7 +94,7 @@ class _DailyQuestionViewState extends State<DailyQuestionView> {
       for (final choice in q.choices)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _ChoiceButton(
+          child: ChoiceTile(
             label: choice.label,
             selected: _pickChoice == choice.id,
             onTap: () => setState(() => _pickChoice = choice.id),
@@ -112,54 +113,8 @@ class _DailyQuestionViewState extends State<DailyQuestionView> {
         onSelect: (blankId, choice) =>
             setState(() => _blankSelections[blankId] = choice),
         choiceBuilder: ({required label, required selected, required onTap}) =>
-            _ChoiceButton(label: label, selected: selected, onTap: onTap),
+            ChoiceTile(label: label, selected: selected, onTap: onTap),
       ),
     ];
-  }
-}
-
-class _ChoiceButton extends StatelessWidget {
-  const _ChoiceButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: selected
-              ? AppColors.primary
-              : AppColors.muted.withValues(alpha: 0.35),
-          width: selected ? 2 : 1,
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? AppColors.primary : Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

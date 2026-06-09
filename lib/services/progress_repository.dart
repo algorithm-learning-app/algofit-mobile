@@ -178,24 +178,13 @@ class ProgressRepository extends ChangeNotifier {
     return _progressStore.value;
   }
 
-  /// 실전 시나리오 1문항 결과 기록: 정답 시 XP 지급 + 해당 문항 cleared,
-  /// 오답 시 wrong 목록에 추가. 뱃지 갱신·영속화. (하트 미소모)
-  GuestProgress recordScenarioAnswer({
-    required String questionId,
-    required bool isCorrect,
-  }) {
-    var next = _progressStore.value;
-    if (isCorrect) {
-      next = addXp(next, scenarioXpPerQuestion);
-      next = withQuestionCleared(next, questionId);
-    } else {
-      final wrong = List<String>.from(next.wrongQuestionIds);
-      if (!wrong.contains(questionId)) wrong.add(questionId);
-      next = next.copyWith(wrongQuestionIds: wrong);
-    }
-
+  /// 실전 시나리오 1문항 결과: 정답 시 XP만 지급한다.
+  /// 시나리오는 별도 연습 모드라 전역 clearedQuestionIds/wrongQuestionIds(복습 풀·correct_10 뱃지)에는
+  /// 섞지 않는다 — 복습 화면은 pick/blank만 렌더하므로 시나리오 id 유입 시 풀이가 불가하다.
+  GuestProgress recordScenarioAnswer({required bool isCorrect}) {
+    if (!isCorrect) return _progressStore.value;
     final before = _progressStore.value;
-    _progressStore.value = withBadges(before, next);
+    _progressStore.value = withBadges(before, addXp(before, scenarioXpPerQuestion));
     _persist.schedule(saveProgress: true);
     notifyListeners();
     return _progressStore.value;

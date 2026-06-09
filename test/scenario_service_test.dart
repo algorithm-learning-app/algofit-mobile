@@ -110,6 +110,23 @@ void main() {
         }
         expect(q.patternChoices.length, greaterThanOrEqualTo(2));
         expect(q.explanation.trim(), isNotEmpty, reason: '${q.id} 해설 없음');
+
+        // 정답 선택지의 patternTag는 오답 선택지와 겹치지 않아야 정답을
+        // patternTag로 구분할 수 있다.
+        final primaryTags = q.patternChoices
+            .where((c) => q.primaryPatternIds.contains(c.id))
+            .map((c) => c.patternTag)
+            .where((t) => t.isNotEmpty)
+            .toSet();
+        for (final c in q.patternChoices) {
+          if (q.primaryPatternIds.contains(c.id)) continue;
+          if (c.patternTag.isEmpty) continue;
+          expect(
+            primaryTags,
+            isNot(contains(c.patternTag)),
+            reason: '${q.id} 오답 ${c.id}의 patternTag(${c.patternTag})가 정답과 겹침',
+          );
+        }
       }
     });
   });

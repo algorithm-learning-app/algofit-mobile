@@ -6,6 +6,7 @@ import '../../services/progress_repository.dart';
 import '../../services/scenario_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/choice_tile.dart';
 import '../../widgets/mascot.dart';
 import '../../widgets/stem_text.dart';
 
@@ -41,15 +42,15 @@ class _ScenarioScreenState extends State<ScenarioScreen> {
     setState(() => _session = buildScenarioSession(all));
   }
 
+  /// 호출 계약: _buildBody가 로딩(_session==null)/빈(isEmpty)/완료(_finished)를
+  /// 먼저 가드한 뒤 _buildQuestion·_buildFeedback에서만 호출되므로
+  /// _session은 non-null이고 _index는 범위 내다.
   ScenarioQuestion get _current => _session![_index];
 
   void _submit() {
     if (_selected == null || _showFeedback) return;
     final correct = _current.isCorrectChoice(_selected!);
-    widget.repo.recordScenarioAnswer(
-      questionId: _current.id,
-      isCorrect: correct,
-    );
+    widget.repo.recordScenarioAnswer(isCorrect: correct);
     setState(() {
       _showFeedback = true;
       _lastCorrect = correct;
@@ -155,7 +156,7 @@ class _ScenarioScreenState extends State<ScenarioScreen> {
           Padding(
             key: ValueKey('scenario-choice-${entry.key}'),
             padding: const EdgeInsets.only(bottom: 8),
-            child: _ScenarioChoice(
+            child: ChoiceTile(
               label: entry.value.label,
               selected: _selected == entry.value.id,
               onTap: () => setState(() => _selected = entry.value.id),
@@ -283,53 +284,6 @@ class _CategoryChip extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: AppColors.primary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ScenarioChoice extends StatelessWidget {
-  const _ScenarioChoice({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.primary.withValues(alpha: 0.2) : AppColors.bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: selected
-              ? AppColors.primary
-              : AppColors.muted.withValues(alpha: 0.35),
-          width: selected ? 2 : 1,
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? AppColors.primary : Colors.white,
-                height: 1.4,
-              ),
-            ),
           ),
         ),
       ),

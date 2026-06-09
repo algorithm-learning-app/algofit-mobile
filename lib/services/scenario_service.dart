@@ -28,12 +28,14 @@ Future<List<ScenarioQuestion>> loadScenarios() async {
 }
 
 /// [all]에서 [count]개를 골라 한 세션을 만든다.
+/// [count]가 0 이하면 빈 세션을, 풀 크기를 넘으면 풀 크기로 클램프한다.
 /// [seed]가 주어지면 셔플이 결정적이라 테스트에서 재현 가능하다.
 List<ScenarioQuestion> buildScenarioSession(
   List<ScenarioQuestion> all, {
   int count = scenarioSessionSize,
   int? seed,
 }) {
+  if (count <= 0) return <ScenarioQuestion>[];
   final pool = List<ScenarioQuestion>.from(all);
   pool.shuffle(seed == null ? null : Random(seed));
   return pool.take(count.clamp(0, pool.length)).toList();
