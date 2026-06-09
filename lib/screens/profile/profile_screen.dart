@@ -292,6 +292,14 @@ class _ReminderCard extends StatelessWidget {
                 ),
                 onTap: () => _onChangeTime(context),
               ),
+            if (enabled)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '기기 절전 상태에 따라 알림이 정시보다 다소 늦을 수 있어요.',
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
+                ),
+              ),
           ],
         ),
       ),

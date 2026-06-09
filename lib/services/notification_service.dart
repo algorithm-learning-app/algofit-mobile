@@ -55,6 +55,8 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android != null) {
+      // Android <13은 런타임 알림 권한 자체가 없어 plugin이 null을 반환하므로
+      // 허용(true)으로 간주한다. Android 13+에서는 실제 grant 결과(bool)가 반환된다.
       final granted = await android.requestNotificationsPermission();
       return granted ?? true;
     }

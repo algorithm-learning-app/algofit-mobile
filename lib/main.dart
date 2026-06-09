@@ -20,13 +20,17 @@ Future<void> main() async {
 
   final repo = await ProgressRepository.create();
 
-  await NotificationService.instance.init();
-  final progress = repo.progress;
-  if (progress.dailyReminderEnabled) {
-    await NotificationService.instance.scheduleDailyReminder(
-      hour: progress.reminderHour,
-      minute: progress.reminderMinute,
-    );
+  try {
+    await NotificationService.instance.init();
+    final progress = repo.progress;
+    if (progress.dailyReminderEnabled) {
+      await NotificationService.instance.scheduleDailyReminder(
+        hour: progress.reminderHour,
+        minute: progress.reminderMinute,
+      );
+    }
+  } catch (e, st) {
+    debugPrint('daily reminder init/schedule failed: $e\n$st');
   }
 
   runApp(AlgofitApp(repo: repo));
