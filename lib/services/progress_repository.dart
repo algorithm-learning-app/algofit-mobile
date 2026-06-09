@@ -7,6 +7,7 @@ import '../models/daily_session.dart';
 import '../models/guest_progress.dart';
 import '../services/daily_service.dart';
 import '../services/question_pool_cache.dart';
+import '../services/scenario_service.dart' show scenarioXpPerQuestion;
 import 'progress/daily_session_store.dart';
 import 'progress/guest_progress_store.dart';
 import 'progress/progress_math.dart';
@@ -172,6 +173,18 @@ class ProgressRepository extends ChangeNotifier {
 
     final before = _progressStore.value;
     _progressStore.value = withBadges(before, next);
+    _persist.schedule(saveProgress: true);
+    notifyListeners();
+    return _progressStore.value;
+  }
+
+  /// 실전 시나리오 1문항 결과: 정답 시 XP만 지급한다.
+  /// 시나리오는 별도 연습 모드라 전역 clearedQuestionIds/wrongQuestionIds(복습 풀·correct_10 뱃지)에는
+  /// 섞지 않는다 — 복습 화면은 pick/blank만 렌더하므로 시나리오 id 유입 시 풀이가 불가하다.
+  GuestProgress recordScenarioAnswer({required bool isCorrect}) {
+    if (!isCorrect) return _progressStore.value;
+    final before = _progressStore.value;
+    _progressStore.value = withBadges(before, addXp(before, scenarioXpPerQuestion));
     _persist.schedule(saveProgress: true);
     notifyListeners();
     return _progressStore.value;

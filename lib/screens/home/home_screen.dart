@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/badges.dart';
 import '../../models/guest_progress.dart';
 import '../../services/progress_repository.dart';
+import '../../services/scenario_service.dart' show scenarioSessionSize;
 import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/code_language_picker.dart';
@@ -57,6 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     _HomeHeader(progress: progress),
                     const SizedBox(height: 16),
                     _DailyCard(repo: widget.repo, progress: progress),
+                    const SizedBox(height: 16),
+                    const _ScenarioCard(),
                     const SizedBox(height: 16),
                     _BadgesSection(progress: progress),
                     const SizedBox(height: 16),
@@ -342,6 +345,69 @@ class _BadgesSection extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScenarioCard extends StatelessWidget {
+  const _ScenarioCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.primary.withValues(alpha: 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.35)),
+      ),
+      child: InkWell(
+        onTap: () => context.push('/scenario'),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.map_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '실전 시나리오',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '상황을 알고리즘 패턴으로 매핑 · $scenarioSessionSize문항',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
         ),
       ),
     );
