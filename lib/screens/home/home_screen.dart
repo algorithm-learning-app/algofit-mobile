@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/badges.dart';
 import '../../models/guest_progress.dart';
 import '../../services/progress_repository.dart';
+import '../../services/scenario_service.dart' show scenarioSessionSize;
 import '../../theme/app_colors.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../../widgets/code_language_picker.dart';
@@ -394,7 +395,7 @@ class _ScenarioCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      '상황을 알고리즘 패턴으로 매핑 · 5문항',
+                      '상황을 알고리즘 패턴으로 매핑 · $scenarioSessionSize문항',
                       style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                   ],
