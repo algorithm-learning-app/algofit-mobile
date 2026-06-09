@@ -76,6 +76,21 @@ flutter:
     - assets/data/pick.json
     - assets/data/blank.json
 
+  fonts:
+    # 본문·UI 기본 폰트 (한국어 가독성, 웹과 일관) — Pretendard, OFL
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Pretendard-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+    # 제목용 디스플레이 폰트 — Do Hyeon, OFL
+    - family: DoHyeon
+      fonts:
+        - asset: assets/fonts/DoHyeon-Regular.ttf
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
