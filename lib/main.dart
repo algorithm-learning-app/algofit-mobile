@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'router/app_router.dart';
+import 'services/notification_service.dart';
 import 'services/progress_repository.dart';
 import 'theme/app_theme.dart';
 
@@ -18,6 +19,16 @@ Future<void> main() async {
   );
 
   final repo = await ProgressRepository.create();
+
+  await NotificationService.instance.init();
+  final progress = repo.progress;
+  if (progress.dailyReminderEnabled) {
+    await NotificationService.instance.scheduleDailyReminder(
+      hour: progress.reminderHour,
+      minute: progress.reminderMinute,
+    );
+  }
+
   runApp(AlgofitApp(repo: repo));
 }
 
