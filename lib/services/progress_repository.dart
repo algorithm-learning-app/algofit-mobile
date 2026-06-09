@@ -7,6 +7,7 @@ import '../models/daily_session.dart';
 import '../models/guest_progress.dart';
 import '../services/daily_service.dart';
 import '../services/question_pool_cache.dart';
+import '../services/scenario_service.dart' show scenarioXpPerQuestion;
 import 'progress/daily_session_store.dart';
 import 'progress/guest_progress_store.dart';
 import 'progress/progress_math.dart';
@@ -168,6 +169,29 @@ class ProgressRepository extends ChangeNotifier {
     );
     if (!isCorrect && deductHeartOnWrong) {
       next = next.copyWith(hearts: (next.hearts - 1).clamp(0, 5));
+    }
+
+    final before = _progressStore.value;
+    _progressStore.value = withBadges(before, next);
+    _persist.schedule(saveProgress: true);
+    notifyListeners();
+    return _progressStore.value;
+  }
+
+  /// 실전 시나리오 1문항 결과 기록: 정답 시 XP 지급 + 해당 문항 cleared,
+  /// 오답 시 wrong 목록에 추가. 뱃지 갱신·영속화. (하트 미소모)
+  GuestProgress recordScenarioAnswer({
+    required String questionId,
+    required bool isCorrect,
+  }) {
+    var next = _progressStore.value;
+    if (isCorrect) {
+      next = addXp(next, scenarioXpPerQuestion);
+      next = withQuestionCleared(next, questionId);
+    } else {
+      final wrong = List<String>.from(next.wrongQuestionIds);
+      if (!wrong.contains(questionId)) wrong.add(questionId);
+      next = next.copyWith(wrongQuestionIds: wrong);
     }
 
     final before = _progressStore.value;

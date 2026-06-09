@@ -75,6 +75,7 @@ flutter:
     - assets/images/mascot/
     - assets/data/pick.json
     - assets/data/blank.json
+    - assets/data/scenario.json
 
   fonts:
     # 본문·UI 기본 폰트 (한국어 가독성, 웹과 일관) — Pretendard, OFL
