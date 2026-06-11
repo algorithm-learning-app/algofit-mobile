@@ -214,17 +214,21 @@ void main() {
       svc.dispose();
     });
 
-    test('409 채택(서버가 더 최신)이 트리거한 notifyListeners 는 재푸시하지 않는다(루프 차단)',
+    test('리스너 활성 경로의 409 채택이 트리거한 notifyListeners 는 재푸시하지 않는다(루프 차단)',
         () async {
+      // 핵심: 409→채택을 startupSync 의 "초기 push"(리스너 부착 전)가 아니라
+      // 실제 운영 경로인 "디바운스 push"(리스너 활성) 에서 일으켜야 _suppress 를 검증한다.
       final (repo, state) = await _setup(seedUpdatedAt: 1000);
+      // schemaVersion 기본값 6 → adoptSyncedProgress 가 실제로 채택을 수행한다(>=6 요구).
       final serverData =
           GuestProgress(guestId: _guestId, level: 7, xp: 999).toJson();
       var putCount = 0;
       final client = MockClient((req) async {
         if (req.method == 'GET') return http.Response('{}', 404);
         putCount++;
-        // 첫 PUT 은 409(서버가 더 최신) → 로컬 채택 유발.
-        if (putCount == 1) {
+        // 1번째 PUT(초기 startup push)=200 → 리스너가 정상 부착되도록 한다.
+        // 2번째 PUT(로컬 변경 후 디바운스 push)=409 → 리스너 활성 상태에서 채택 유발.
+        if (putCount == 2) {
           return http.Response(
             jsonEncode({
               'error': 'stale',
@@ -240,14 +244,23 @@ void main() {
         return http.Response(req.body, 200);
       });
       final svc = service(client, debounce: const Duration(milliseconds: 5));
-      await svc.startupSync(repo, state); // 리스너 부착(초기 GET 404 → PUT 1회=409)
-      // 첫 PUT(409)으로 이미 채택됨. 채택은 notifyListeners 를 부르지만 _suppress 가 막아야 한다.
+      // 초기 push(GET 404 → PUT#1=200) 후 repo.addListener(_onChange) 가 부착된다.
+      await svc.startupSync(repo, state);
       expect(putCount, 1);
-      expect(repo.progress.level, 7); // 채택됨
+      final afterStartup = putCount;
 
-      // 디바운스보다 충분히 길게 대기 → 채택이 유발한 변경이 재푸시되지 않았음을 확인.
+      // 로컬 변경 → _onChange(리스너 활성) → 디바운스 PUT#2 예약.
+      repo.recordScenarioAnswer(isCorrect: true);
+      // 디바운스보다 길게 대기 → PUT#2(=409) 실행 → _adopt → notifyListeners.
+      // 채택 중 _suppress 가 _onChange 의 재예약을 막아야 한다.
       await Future<void>.delayed(const Duration(milliseconds: 30));
-      expect(putCount, 1, reason: 'adopt-triggered notifyListeners must be suppressed');
+
+      // PUT#2(409) 한 번만 일어나고 채택이 유발한 notify 로 인한 PUT#3 은 없어야 한다.
+      // (_suppress 가 제거되면 채택의 notifyListeners 가 _onChange→디바운스 PUT 을
+      //  다시 예약해 putCount 가 3 이 되어 이 단언이 실패한다 = 진짜 회귀 가드.)
+      expect(putCount, afterStartup + 1,
+          reason: 'adopt-triggered notifyListeners must be suppressed');
+      expect(repo.progress.level, 7); // 채택됨
       svc.dispose();
     });
   });
