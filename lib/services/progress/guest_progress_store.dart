@@ -40,12 +40,22 @@ class GuestProgressStore {
       }
     }
 
-    value = _normalizeWorld2Nodes(
-      _resetDailyIfNewDay(value, today).copyWith(guestId: guestId),
-    );
+    value = _normalize(value.copyWith(guestId: guestId), today);
     await persist();
     return value;
   }
+
+  /// 서버에서 채택한 진행을 정규화 경로(daily 리셋 + world2 노드 패딩/트림)를 거쳐 교체한다.
+  /// [loadAndNormalize] 와 동일한 정규화를 공유하므로 동기화 채택도 디스크 로드와 같은 보정을 받는다.
+  Future<void> replaceAndNormalize(GuestProgress incoming) async {
+    final guestId = _ensureGuestId();
+    value = _normalize(incoming.copyWith(guestId: guestId), getTodaySeoul());
+    await persist();
+  }
+
+  /// daily 리셋 → world2 노드 정규화 순서로 공통 보정한다.
+  GuestProgress _normalize(GuestProgress p, String today) =>
+      _normalizeWorld2Nodes(_resetDailyIfNewDay(p, today));
 
   Future<void> persist() async {
     await _prefs.setString(_progressKey, jsonEncode(value.toJson()));
