@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:algofit/config/sync_config.dart';
+import 'package:algofit/data/world2_stages.dart';
 import 'package:algofit/models/guest_progress.dart';
 import 'package:algofit/services/progress/sync_state_store.dart';
 import 'package:algofit/services/progress_repository.dart';
@@ -210,6 +211,95 @@ void main() {
       repo.recordScenarioAnswer(isCorrect: true); // 진행 변경 → _onChange
       await Future<void>.delayed(const Duration(milliseconds: 20));
       expect(putCount, greaterThan(initial));
+      svc.dispose();
+    });
+
+    test('409 채택(서버가 더 최신)이 트리거한 notifyListeners 는 재푸시하지 않는다(루프 차단)',
+        () async {
+      final (repo, state) = await _setup(seedUpdatedAt: 1000);
+      final serverData =
+          GuestProgress(guestId: _guestId, level: 7, xp: 999).toJson();
+      var putCount = 0;
+      final client = MockClient((req) async {
+        if (req.method == 'GET') return http.Response('{}', 404);
+        putCount++;
+        // 첫 PUT 은 409(서버가 더 최신) → 로컬 채택 유발.
+        if (putCount == 1) {
+          return http.Response(
+            jsonEncode({
+              'error': 'stale',
+              'current': {
+                'guestId': _guestId,
+                'updatedAt': 8000,
+                'data': serverData,
+              },
+            }),
+            409,
+          );
+        }
+        return http.Response(req.body, 200);
+      });
+      final svc = service(client, debounce: const Duration(milliseconds: 5));
+      await svc.startupSync(repo, state); // 리스너 부착(초기 GET 404 → PUT 1회=409)
+      // 첫 PUT(409)으로 이미 채택됨. 채택은 notifyListeners 를 부르지만 _suppress 가 막아야 한다.
+      expect(putCount, 1);
+      expect(repo.progress.level, 7); // 채택됨
+
+      // 디바운스보다 충분히 길게 대기 → 채택이 유발한 변경이 재푸시되지 않았음을 확인.
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(putCount, 1, reason: 'adopt-triggered notifyListeners must be suppressed');
+      svc.dispose();
+    });
+  });
+
+  group('adopt 정규화/검증', () {
+    test('world2Nodes 길이가 다른 서버 데이터를 채택하면 콘텐츠 스테이지 수로 정규화된다', () async {
+      final (repo, state) = await _setup(seedUpdatedAt: 1000);
+      // 서버가 world2Nodes 를 10개만 보냈다(콘텐츠 스테이지 수=15 와 불일치).
+      final shortNodes = List<String>.filled(10, 'locked');
+      final serverData = GuestProgress(guestId: _guestId, level: 4).toJson()
+        ..['world2Nodes'] = shortNodes;
+      final client = MockClient((req) async {
+        if (req.method == 'GET') {
+          return http.Response(
+            jsonEncode(
+              {'guestId': _guestId, 'updatedAt': 5000, 'data': serverData},
+            ),
+            200,
+          );
+        }
+        return http.Response(req.body, 200);
+      });
+      final svc = service(client);
+      await svc.startupSync(repo, state);
+      expect(repo.progress.level, 4); // 채택됨
+      // adopt 가 정규화 경로를 거쳤음을 증명: 길이가 콘텐츠 스테이지 수로 보정됨.
+      expect(repo.progress.world2Nodes.length, world2TotalStages);
+      svc.dispose();
+    });
+
+    test('웹 유사 blob(schemaVersion 5/누락)은 거부되어 로컬 진행이 바뀌지 않는다', () async {
+      final (repo, state) = await _setup(seedUpdatedAt: 1000);
+      final localLevel = repo.progress.level;
+      // 웹 클라이언트의 schema-v5 blob(모바일은 >=6 만 허용).
+      final webBlob = GuestProgress(guestId: _guestId, level: 99, xp: 1234).toJson()
+        ..['schemaVersion'] = 5;
+      final client = MockClient((req) async {
+        if (req.method == 'GET') {
+          return http.Response(
+            jsonEncode(
+              {'guestId': _guestId, 'updatedAt': 5000, 'data': webBlob},
+            ),
+            200,
+          );
+        }
+        return http.Response(req.body, 200);
+      });
+      final svc = service(client);
+      await svc.startupSync(repo, state);
+      // 거부되었으므로 로컬 진행은 그대로(level 99 로 덮어쓰이지 않음).
+      expect(repo.progress.level, localLevel);
+      expect(repo.progress.xp, isNot(1234));
       svc.dispose();
     });
   });

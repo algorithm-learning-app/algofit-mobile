@@ -80,10 +80,11 @@ class SyncService {
     final repo = _repo, state = _state;
     if (repo == null || state == null) return;
     // 로컬 변경 시각 갱신 + 디바운스 push.
-    state.setLocalUpdatedAt(_now());
+    unawaited(state.setLocalUpdatedAt(_now()));
+    final guestId = repo.progress.guestId;
     _timer?.cancel();
     _timer = Timer(_debounce, () {
-      push(repo.progress.guestId, repo, state);
+      push(guestId, repo, state);
     });
   }
 
@@ -93,7 +94,9 @@ class SyncService {
     try {
       final res = await _client.get(_uri(guestId), headers: _headers(guestId));
       if (res.statusCode != 200) return null;
-      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(res.body);
+      if (decoded is! Map) return null;
+      final body = decoded.cast<String, dynamic>();
       final updatedAt = (body['updatedAt'] as num?)?.toInt();
       final data = body['data'];
       if (updatedAt == null || data is! Map) return null;
@@ -130,19 +133,25 @@ class SyncService {
       );
       if (res.statusCode == 200) return true;
       if (res.statusCode == 409) {
-        final body = jsonDecode(res.body) as Map<String, dynamic>;
-        final current = body['current'];
-        if (current is Map) {
-          final data = current['data'];
-          final serverUpdatedAt = (current['updatedAt'] as num?)?.toInt();
-          if (data is Map && serverUpdatedAt != null) {
-            await _adopt(
-              repo,
-              state,
-              data.cast<String, dynamic>(),
-              serverUpdatedAt,
-            );
+        // 409 본문 파싱 실패는 일반 push 실패와 구분해 로깅한다.
+        // (바깥 catch 로 새면 정상 실패와 분간 불가 + 채택 누락으로 재푸시 루프 위험.)
+        try {
+          final decoded = jsonDecode(res.body);
+          final current = decoded is Map ? decoded['current'] : null;
+          if (current is Map) {
+            final data = current['data'];
+            final serverUpdatedAt = (current['updatedAt'] as num?)?.toInt();
+            if (data is Map && serverUpdatedAt != null) {
+              await _adopt(
+                repo,
+                state,
+                data.cast<String, dynamic>(),
+                serverUpdatedAt,
+              );
+            }
           }
+        } catch (e) {
+          debugPrint('sync 409 parse failed: $e');
         }
         return false;
       }

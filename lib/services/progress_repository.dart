@@ -240,6 +240,18 @@ class ProgressRepository extends ChangeNotifier {
   /// 서버에서 받은 진행 JSON 으로 로컬 진행을 교체한다(동기화 채택용).
   /// 파싱 실패 시 아무것도 바꾸지 않는다.
   Future<void> adoptSyncedProgress(Map<String, dynamic> data) async {
+    // 이종(異種) blob 거부: GuestProgress.fromJson 은 관대해서(누락 키를 기본값으로 채움)
+    // 같은 guestId 로 푸시된 웹 클라이언트의 schema-v5 blob(또는 잘못된 형태)을 그대로
+    // 채택해 모바일 전용 필드를 덮어쓸 수 있다. 모바일 스키마(>=6)만 허용한다(웹은 5).
+    final schemaVersion = data['schemaVersion'];
+    if (schemaVersion is! int || schemaVersion < 6) {
+      debugPrint(
+        'adoptSyncedProgress skipped: foreign/legacy blob '
+        '(schemaVersion=$schemaVersion, mobile requires int>=6)',
+      );
+      return;
+    }
+
     final GuestProgress next;
     try {
       next = GuestProgress.fromJson(data);
@@ -247,8 +259,10 @@ class ProgressRepository extends ChangeNotifier {
       return;
     }
     // guestId 는 이 기기 값을 유지한다(서버 조회 키와 동일하므로 보통 같음).
-    _progressStore.value = next.copyWith(guestId: _progressStore.value.guestId);
-    await _progressStore.persist();
+    // 정규화 경로(daily 리셋 + world2 노드 보정)를 거쳐 교체한다.
+    await _progressStore.replaceAndNormalize(
+      next.copyWith(guestId: _progressStore.value.guestId),
+    );
     notifyListeners();
   }
 

@@ -38,24 +38,28 @@ Future<void> main() async {
   }
 
   // 서버 동기화는 SYNC_BASE_URL/SYNC_SECRET 이 주입됐을 때만 동작한다(미주입 시 무동작).
-  // repo 가 SyncService 를 리스너로 보유하므로 인스턴스는 앱 수명 동안 유지된다.
+  // 인스턴스를 보유해 AlgofitApp 에 주입하고, 위젯이 수명을 소유(dispose)한다.
+  SyncService? syncService;
   if (syncEnabled) {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await SyncService(baseUrl: kSyncBaseUrl, secret: kSyncSecret)
-          .startupSync(repo, SyncStateStore(prefs));
+      syncService = SyncService(baseUrl: kSyncBaseUrl, secret: kSyncSecret);
+      await syncService.startupSync(repo, SyncStateStore(prefs));
     } catch (e, st) {
       debugPrint('guest progress sync init failed: $e\n$st');
     }
   }
 
-  runApp(AlgofitApp(repo: repo));
+  runApp(AlgofitApp(repo: repo, syncService: syncService));
 }
 
 class AlgofitApp extends StatefulWidget {
-  const AlgofitApp({super.key, required this.repo});
+  const AlgofitApp({super.key, required this.repo, this.syncService});
 
   final ProgressRepository repo;
+
+  /// 동기화 비활성(미주입) 시 null. 활성 시 위젯이 수명을 소유한다.
+  final SyncService? syncService;
 
   @override
   State<AlgofitApp> createState() => _AlgofitAppState();
@@ -63,6 +67,12 @@ class AlgofitApp extends StatefulWidget {
 
 class _AlgofitAppState extends State<AlgofitApp> {
   late final GoRouter _router = createAppRouter(widget.repo);
+
+  @override
+  void dispose() {
+    widget.syncService?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
