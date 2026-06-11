@@ -237,6 +237,21 @@ class ProgressRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 서버에서 받은 진행 JSON 으로 로컬 진행을 교체한다(동기화 채택용).
+  /// 파싱 실패 시 아무것도 바꾸지 않는다.
+  Future<void> adoptSyncedProgress(Map<String, dynamic> data) async {
+    final GuestProgress next;
+    try {
+      next = GuestProgress.fromJson(data);
+    } catch (_) {
+      return;
+    }
+    // guestId 는 이 기기 값을 유지한다(서버 조회 키와 동일하므로 보통 같음).
+    _progressStore.value = next.copyWith(guestId: _progressStore.value.guestId);
+    await _progressStore.persist();
+    notifyListeners();
+  }
+
   /// PC 웹 이어하기 URL (단기 handoff 토큰, guestId 직접 노출 없음).
   String createPcContinueUrl() {
     return pcContinueUrl(createHandoffToken(_progressStore.value.guestId));
